@@ -532,9 +532,21 @@ let currentEmpName = localStorage.getItem('at_emp_name') || '';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let absences     = [];
-let calOffset    = 0;      // month offset from today (in steps of 3)
+let calOffset    = 0;
 let logType      = 'Vacation';
 let selectedFile = null;
+
+// Actual field names auto-detected from Airtable schema
+let F = {
+  person:      'Person',
+  type:        'Type',
+  startDate:   'Start date',
+  endDate:     'End date',
+  workingDays: 'Working Days',
+  status:      'Status',
+  notes:       'Notes',
+  certificate: 'Medical Certificate',
+};
 
 const today    = new Date(); today.setHours(0,0,0,0);
 const todayStr = fmtDate(today);
@@ -598,11 +610,39 @@ async function uploadAttachment(recordId, file) {
   return r.json();
 }
 
+// ── Field name auto-detection ─────────────────────────────────────────────────
+async function detectFields() {
+  try {
+    const r = await fetch(
+      `https://api.airtable.com/v0/meta/bases/${AIRTABLE_BASE}/tables`,
+      { headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` } }
+    );
+    if (!r.ok) return; // non-fatal, keep defaults
+    const data = await r.json();
+    const table = data.tables.find(t => t.name.toLowerCase() === TABLE_ABSENCE.toLowerCase());
+    if (!table) return;
+    for (const field of table.fields) {
+      const lo = field.name.toLowerCase().trim();
+      if (lo === 'person')             F.person      = field.name;
+      else if (lo === 'type')          F.type        = field.name;
+      else if (lo === 'start date')    F.startDate   = field.name;
+      else if (lo === 'end date')      F.endDate     = field.name;
+      else if (lo === 'working days')  F.workingDays = field.name;
+      else if (lo === 'status')        F.status      = field.name;
+      else if (lo === 'notes')         F.notes       = field.name;
+      else if (lo === 'medical certificate') F.certificate = field.name;
+    }
+  } catch(e) {
+    console.warn('Schema detection skipped:', e.message);
+  }
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
   document.getElementById('headerUser').innerHTML =
     `${currentEmpName} <a href="#" onclick="switchUser();return false;">Not you?</a>`;
   try {
+    await detectFields();
     await loadAbsences();
     updateAllotment();
     renderCalendar();
@@ -623,16 +663,14 @@ async function init() {
 
 async function loadAbsences() {
   const formula = encodeURIComponent(`FIND("${currentEmpId}",ARRAYJOIN({Person}))`);
-  const fields  = ['Person','Type','Start date','End date','Working Days','Status']
-    .map(f=>`fields[]=${encodeURIComponent(f)}`).join('&');
-  const recs = await loadAllPages(TABLE_ABSENCE, `?filterByFormula=${formula}&${fields}`);
-  absences = recs.map(r=>({
+  const recs = await loadAllPages(TABLE_ABSENCE, `?filterByFormula=${formula}`);
+  absences = recs.map(r => ({
     id:          r.id,
-    type:        r.fields['Type']         || '',
-    start:       r.fields['Start date']   || '',
-    end:         r.fields['End date']     || '',
-    workingDays: r.fields['Working Days'] || 0,
-    status:      r.fields['Status']       || 'Approved',
+    type:        r.fields[F.type]        || '',
+    start:       r.fields[F.startDate]   || '',
+    end:         r.fields[F.endDate]     || '',
+    workingDays: r.fields[F.workingDays] || 0,
+    status:      r.fields[F.status]      || 'Approved',
   }));
 }
 
@@ -806,15 +844,15 @@ async function submitAbsence() {
     }
 
     const fields = {
-      'Person':       [currentEmpId],
-      'Type':         logType,
-      'Start date':   startStr,
-      'End date':     endStr,
-      'Working Days': wdays,
-      'Status':       'Approved',
+      [F.person]:      [currentEmpId],
+      [F.type]:        logType,
+      [F.startDate]:   startStr,
+      [F.endDate]:     endStr,
+      [F.workingDays]: wdays,
+      [F.status]:      'Approved',
     };
     const note = document.getElementById('absenceNote').value.trim();
-    if (note) fields['Notes'] = note;
+    if (note) fields[F.notes] = note;
 
     const result   = await atCreate(TABLE_ABSENCE, fields);
     const recordId = result.records[0].id;

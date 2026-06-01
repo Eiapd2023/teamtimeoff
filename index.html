@@ -964,8 +964,21 @@ function switchUser() {
   location.reload();
 }
 
-// ── Service worker ────────────────────────────────────────────────────────────
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(console.warn);
+// ── Service worker — register and force update immediately ────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    reg.update(); // check for new sw.js on every page load
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          // New version available — reload silently
+          window.location.reload();
+        }
+      });
+    });
+  }).catch(console.warn);
+}
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 if (AIRTABLE_BASE && AIRTABLE_TOKEN && currentEmpId) {

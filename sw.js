@@ -1,4 +1,4 @@
-const CACHE = 'team-time-off-v1';
+const CACHE = 'team-time-off-v3';
 const PRECACHE = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
@@ -30,12 +30,12 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Cache-first for app shell
+  // Network-first for app shell so updates are always picked up
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
+    fetch(e.request).then(res => {
       const clone = res.clone();
       caches.open(CACHE).then(c => c.put(e.request, clone));
       return res;
-    }))
+    }).catch(() => caches.match(e.request))
   );
 });

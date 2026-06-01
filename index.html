@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#2d7ab5" />
+  <title>EIAPD – Team Time Off</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <style>
+    :root {
+      --primary: #2d7ab5;
+      --primary-light: #e8f3fb;
+      --primary-dark: #1a5a8a;
+      --vacation: #2d7ab5;
+      --vacation-bg: #e8f3fb;
+      --sick: #ef4444;
+      --sick-bg: #fef2f2;
+      --green: #6ab040;
+      --green-dark: #4a7c2a;
+      --weekend: #f1f5f9;
+      --today-border: #f59e0b;
+      --text: #1e293b;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1a5a8a 0%, #2d7ab5 60%, #3a8fcc 100%);
+      color: #fff;
+      padding: 0 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(29,90,138,.35);
+    }
+    .header-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      height: 56px;
+      flex-wrap: wrap;
+    }
+    .header-title { font-size: 1.1rem; font-weight: 700; flex: 1 1 auto; }
+    .header-title span { opacity: .7; font-weight: 400; font-size: .85rem; margin-left: 6px; }
+
+    /* Employee selector */
+    #employeeSelect {
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.3);
+      color: #fff;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: .85rem;
+      cursor: pointer;
+      max-width: 180px;
+    }
+    #employeeSelect option { color: var(--text); background: #fff; }
+
+    /* Allotment badges */
+    .badges { display: flex; gap: 8px; }
+    .badge {
+      background: rgba(255,255,255,.18);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: .78rem;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: default;
+    }
+    .badge.low { background: rgba(239,68,68,.35); }
+
+    /* ── Action Bar ── */
+    .action-bar {
+      max-width: 900px;
+      margin: 16px auto 0;
+      padding: 0 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .1s, box-shadow .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-vacation { background: var(--vacation); color: #fff; box-shadow: 0 2px 6px rgba(45,122,181,.3); }
+    .btn-sick     { background: var(--sick);     color: #fff; box-shadow: 0 2px 6px rgba(239,68,68,.3); }
+    .btn-outline  { background: #fff; color: var(--text); border: 1px solid var(--border); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    .mode-hint {
+      font-size: .8rem;
+      color: var(--text-muted);
+      align-self: center;
+      padding: 0 4px;
+    }
+
+    /* ── Calendar grid ── */
+    .calendar-wrap {
+      max-width: 900px;
+      margin: 16px auto 80px;
+      padding: 0 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .month-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .month-header {
+      background: linear-gradient(90deg, var(--primary-light), #f0fbf0);
+      color: var(--primary-dark);
+      font-weight: 700;
+      font-size: .9rem;
+      padding: 10px 14px;
+      letter-spacing: .02em;
+    }
+    .day-names {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      padding: 6px 10px 2px;
+      gap: 2px;
+    }
+    .day-name {
+      text-align: center;
+      font-size: .68rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .day-name.we { color: #cbd5e1; }
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      padding: 4px 10px 10px;
+      gap: 2px;
+    }
+    .day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .78rem;
+      border-radius: 6px;
+      cursor: pointer;
+      position: relative;
+      user-select: none;
+      transition: background .1s;
+      font-weight: 500;
+    }
+    .day:hover:not(.empty):not(.weekend):not(.past) { background: var(--primary-light); }
+    .day.empty { cursor: default; }
+    .day.weekend { color: #cbd5e1; cursor: default; background: var(--weekend); }
+    .day.past { color: #d1d5db; cursor: not-allowed; }
+    .day.today { outline: 2px solid var(--today-border); outline-offset: -2px; font-weight: 700; }
+    .day.vacation {
+      background: var(--vacation);
+      color: #fff;
+      border-radius: 0;
+    }
+    .day.vacation.range-start { border-radius: 6px 0 0 6px; }
+    .day.vacation.range-end   { border-radius: 0 6px 6px 0; }
+    .day.vacation.range-single { border-radius: 6px; }
+    .day.sick {
+      background: var(--sick);
+      color: #fff;
+      border-radius: 6px;
+    }
+    .day.selecting { background: var(--primary-light); outline: 2px dashed var(--primary); outline-offset: -2px; }
+    .day.in-range { background: rgba(79,70,229,.12); border-radius: 0; }
+
+    /* ── Toast ── */
+    .toast-wrap {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      background: #1e293b;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: .85rem;
+      box-shadow: var(--shadow-lg);
+      animation: slideUp .25s ease;
+      white-space: nowrap;
+    }
+    .toast.success { background: #059669; }
+    .toast.error   { background: #dc2626; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Modal ── */
+    .modal-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.4);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--card);
+      border-radius: 20px 20px 0 0;
+      padding: 24px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: var(--shadow-lg);
+      animation: slideUp .3s ease;
+    }
+    .modal h2 { font-size: 1rem; margin-bottom: 16px; }
+    .modal-row { margin-bottom: 14px; }
+    .modal-row label { display: block; font-size: .82rem; font-weight: 600; margin-bottom: 5px; color: var(--text-muted); }
+    .modal-row input, .modal-row select {
+      width: 100%; padding: 9px 12px; border: 1px solid var(--border);
+      border-radius: 8px; font-size: .9rem; color: var(--text);
+      background: var(--bg);
+    }
+    .modal-info {
+      background: var(--primary-light);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: .82rem;
+      color: var(--primary-dark);
+      margin-bottom: 16px;
+    }
+    .modal-info strong { display: block; margin-bottom: 2px; font-size: .9rem; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+    .modal-actions .btn { flex: 1; justify-content: center; }
+
+    /* ── Legend ── */
+    .legend {
+      max-width: 900px;
+      margin: 0 auto 0;
+      padding: 0 16px 8px;
+      display: flex;
+      gap: 16px;
+      font-size: .78rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+    .legend-dot.vacation { background: var(--vacation); }
+    .legend-dot.sick     { background: var(--sick); }
+    .legend-dot.today    { border: 2px solid var(--today-border); }
+    .legend-dot.weekend  { background: var(--weekend); border: 1px solid var(--border); }
+
+    /* ── Loading ── */
+    #loadingBanner {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+      font-size: .9rem;
+    }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Year selector ── */
+    .year-nav {
+      max-width: 900px;
+      margin: 12px auto 0;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .year-nav button {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 32px; height: 32px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .year-nav button:hover { background: var(--primary-light); }
+    #yearLabel { font-weight: 700; font-size: 1.1rem; color: var(--primary-dark); min-width: 52px; text-align: center; }
+
+    @media (min-width: 600px) {
+      .modal-backdrop { align-items: center; }
+      .modal { border-radius: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-inner">
+    <div class="header-title">
+      <img src="icon-192.png" alt="" style="height:30px;vertical-align:middle;margin-right:8px;border-radius:6px;background:#fff;padding:2px;" />
+      EIAPD <span style="color:#a8d878;">Team Time Off</span>
+    </div>
+    <select id="employeeSelect"><option value="">Loading…</option></select>
+    <div class="badges">
+      <div class="badge" id="badgeVac">🏖 – vacation</div>
+      <div class="badge" id="badgeSick">🤒 – sick</div>
+    </div>
+  </div>
+</header>
+
+<!-- Year nav -->
+<div class="year-nav">
+  <button id="prevYear">‹</button>
+  <span id="yearLabel">2026</span>
+  <button id="nextYear">›</button>
+</div>
+
+<!-- Action bar -->
+<div class="action-bar">
+  <button class="btn btn-vacation" id="btnVacation">🏖 Book Vacation</button>
+  <button class="btn btn-sick"     id="btnSick">🤒 Log Sick Day</button>
+  <span class="mode-hint" id="modeHint"></span>
+  <button class="btn btn-outline"  id="btnCancel" style="display:none">✕ Cancel</button>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot vacation"></div> Vacation</div>
+  <div class="legend-item"><div class="legend-dot sick"></div>     Sick day</div>
+  <div class="legend-item"><div class="legend-dot today"></div>    Today</div>
+  <div class="legend-item"><div class="legend-dot weekend"></div>  Weekend</div>
+</div>
+
+<!-- Calendar -->
+<div id="loadingBanner"><div class="spinner"></div>Loading…</div>
+<div class="calendar-wrap" id="calendarWrap" style="display:none"></div>
+
+<!-- Booking modal -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <h2 id="modalTitle">Book Vacation</h2>
+    <div class="modal-info" id="modalInfo"></div>
+    <div class="modal-row">
+      <label>Note (optional)</label>
+      <input type="text" id="modalNote" placeholder="e.g. Annual leave, Doctor appointment…" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="modalCancel">Cancel</button>
+      <button class="btn btn-vacation" id="modalConfirm">Confirm &amp; Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- First-run setup screen -->
+<div id="setupScreen" style="display:none;position:fixed;inset:0;background:#f8fafc;z-index:999;align-items:center;justify-content:center;padding:24px;">
+  <div style="background:#fff;border-radius:16px;padding:32px;max-width:420px;width:100%;box-shadow:0 8px 30px rgba(0,0,0,.12);">
+    <div style="text-align:center;margin-bottom:24px;">
+      <img src="icon-192.png" style="height:56px;border-radius:12px;" />
+      <h2 style="margin-top:12px;font-size:1.2rem;color:#1a5a8a;">EIAPD Team Time Off</h2>
+      <p style="color:#94a3b8;font-size:.85rem;margin-top:4px;">One-time setup — your credentials stay in this browser only.</p>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="display:block;font-size:.82rem;font-weight:600;color:#64748b;margin-bottom:5px;">Airtable Base ID</label>
+      <input id="setupBase" type="text" placeholder="appXXXXXXXXXXXXXX"
+        style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:.9rem;font-family:monospace;" />
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="display:block;font-size:.82rem;font-weight:600;color:#64748b;margin-bottom:5px;">Airtable Personal Access Token</label>
+      <input id="setupToken" type="password" placeholder="patXXXX…"
+        style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:.9rem;font-family:monospace;" />
+      <p style="font-size:.75rem;color:#94a3b8;margin-top:5px;">Stored only in your browser. Never uploaded anywhere.</p>
+    </div>
+    <button id="setupSave" onclick="saveSetup()"
+      style="width:100%;padding:11px;background:linear-gradient(135deg,#1a5a8a,#2d7ab5);color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;">
+      Connect to Airtable →
+    </button>
+    <p id="setupError" style="color:#dc2626;font-size:.8rem;margin-top:10px;display:none;"></p>
+  </div>
+</div>
+
+<script>
+// ── Config ───────────────────────────────────────────────────────────────────
+const TABLE_MEMBERS   = 'Team Members';
+const TABLE_ABSENCE   = 'Absence Events';
+const VACATION_ALLOT  = 20;
+const SICK_ALLOT      = 10;
+
+// Credentials stored in browser only (never in code)
+let AIRTABLE_BASE  = localStorage.getItem('at_base')  || '';
+let AIRTABLE_TOKEN = localStorage.getItem('at_token') || '';
+
+function atBaseUrl()  { return `https://api.airtable.com/v0/${AIRTABLE_BASE}`; }
+function atHeaders()  { return { 'Authorization': `Bearer ${AIRTABLE_TOKEN}`, 'Content-Type': 'application/json' }; }
+
+// ── State ────────────────────────────────────────────────────────────────────
+let employees     = [];   // [{ id, name }]
+let absences      = [];   // all absence records for current employee
+let currentEmpId  = null;
+let currentEmpRecordId = null;
+let year          = new Date().getFullYear();
+
+// Booking flow state
+// mode: null | 'vacation-start' | 'vacation-end' | 'sick'
+let mode          = null;
+let rangeStart    = null;  // Date
+let rangeEnd      = null;  // Date (hover/confirmed)
+
+// Pending submission
+let pendingStart  = null;
+let pendingEnd    = null;
+let pendingType   = null;
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const fmt = d => d.toISOString().slice(0,10);
+const parseDate = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); };
+const isWeekend = d => d.getDay()===0 || d.getDay()===6;
+const today = new Date(); today.setHours(0,0,0,0);
+
+function workingDaysBetween(a, b) {
+  let count = 0, cur = new Date(a);
+  while (cur <= b) {
+    if (!isWeekend(cur)) count++;
+    cur.setDate(cur.getDate()+1);
+  }
+  return count;
+}
+
+function countUsed(type) {
+  return absences
+    .filter(a => a.type === type)
+    .reduce((s, a) => s + (a.workingDays || 0), 0);
+}
+
+// ── Airtable API ─────────────────────────────────────────────────────────────
+async function atFetch(table, params='') {
+  const url = `${atBaseUrl()}/${encodeURIComponent(table)}${params}`;
+  const r = await fetch(url, { headers: atHeaders() });
+  if (!r.ok) throw new Error(`Airtable ${r.status}: ${await r.text()}`);
+  return r.json();
+}
+
+async function atCreate(table, fields) {
+  const url = `${atBaseUrl()}/${encodeURIComponent(table)}`;
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: atHeaders(),
+    body: JSON.stringify({ records: [{ fields }] }),
+  });
+  if (!r.ok) throw new Error(`Airtable ${r.status}: ${await r.text()}`);
+  return r.json();
+}
+
+async function loadAllPages(table, params='') {
+  let records = [], offset = null;
+  do {
+    const sep = params.includes('?') ? '&' : '?';
+    const url = offset ? `${params}${sep}offset=${offset}` : params;
+    const data = await atFetch(table, url);
+    records.push(...data.records);
+    offset = data.offset;
+  } while (offset);
+  return records;
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  try {
+    const recs = await loadAllPages(TABLE_MEMBERS, '?fields%5B%5D=Name&sort%5B0%5D%5Bfield%5D=Name');
+    employees = recs.map(r => ({ id: r.id, name: r.fields.Name || '(unnamed)' }));
+    populateEmployeeSelect();
+    if (employees.length > 0) {
+      currentEmpId       = employees[0].id;
+      currentEmpRecordId = employees[0].id;
+      await loadAbsences();
+    }
+    renderAll();
+    document.getElementById('loadingBanner').style.display = 'none';
+    document.getElementById('calendarWrap').style.display  = 'grid';
+  } catch(e) {
+    document.getElementById('loadingBanner').innerHTML = `<p style="color:#dc2626">⚠ Failed to load: ${e.message}</p>`;
+    console.error(e);
+  }
+}
+
+function populateEmployeeSelect() {
+  const sel = document.getElementById('employeeSelect');
+  sel.innerHTML = employees.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+  sel.addEventListener('change', async () => {
+    currentEmpId = sel.value;
+    currentEmpRecordId = sel.value;
+    cancelMode();
+    await loadAbsences();
+    renderAll();
+  });
+}
+
+async function loadAbsences() {
+  const filter = encodeURIComponent(`{Person} != ""`);
+  const all = await loadAllPages(TABLE_ABSENCE,
+    `?filterByFormula=FIND("${currentEmpId}",ARRAYJOIN({Person}))&fields%5B%5D=Person&fields%5B%5D=Type&fields%5B%5D=Start+date&fields%5B%5D=End+date&fields%5B%5D=Working+Days&fields%5B%5D=Status`
+  );
+  absences = all.map(r => ({
+    id:          r.id,
+    type:        r.fields['Type'],
+    start:       r.fields['Start date'],
+    end:         r.fields['End date'],
+    workingDays: r.fields['Working Days'] || 0,
+    status:      r.fields['Status'],
+  }));
+  updateBadges();
+}
+
+// ── Badges ───────────────────────────────────────────────────────────────────
+function updateBadges() {
+  const vacUsed  = countUsed('Vacation');
+  const sickUsed = countUsed('Sick day');
+  const vacLeft  = VACATION_ALLOT - vacUsed;
+  const sickLeft = SICK_ALLOT     - sickUsed;
+  const bv = document.getElementById('badgeVac');
+  const bs = document.getElementById('badgeSick');
+  bv.textContent = `🏖 ${vacLeft}/${VACATION_ALLOT} vacation`;
+  bs.textContent = `🤒 ${sickLeft}/${SICK_ALLOT} sick`;
+  bv.classList.toggle('low', vacLeft <= 3);
+  bs.classList.toggle('low', sickLeft <= 3);
+}
+
+// ── Render Calendar ───────────────────────────────────────────────────────────
+function renderAll() {
+  const wrap = document.getElementById('calendarWrap');
+  wrap.innerHTML = '';
+  for (let m = 0; m < 12; m++) wrap.appendChild(buildMonth(year, m));
+  document.getElementById('yearLabel').textContent = year;
+}
+
+function buildMonth(y, m) {
+  const card = document.createElement('div');
+  card.className = 'month-card';
+
+  const monthNames = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+  card.innerHTML = `
+    <div class="month-header">${monthNames[m]} ${y}</div>
+    <div class="day-names">
+      <div class="day-name">Mo</div><div class="day-name">Tu</div>
+      <div class="day-name">We</div><div class="day-name">Th</div>
+      <div class="day-name">Fr</div>
+      <div class="day-name we">Sa</div><div class="day-name we">Su</div>
+    </div>
+    <div class="days-grid" id="grid-${y}-${m}"></div>
+  `;
+
+  const grid = card.querySelector(`#grid-${y}-${m}`);
+
+  // First day offset (Mon=0)
+  const first = new Date(y, m, 1);
+  const startOffset = (first.getDay() + 6) % 7;
+  for (let i = 0; i < startOffset; i++) {
+    const blank = document.createElement('div');
+    blank.className = 'day empty';
+    grid.appendChild(blank);
+  }
+
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(y, m, d);
+    const cell = document.createElement('div');
+    cell.className = 'day';
+    cell.textContent = d;
+    cell.dataset.date = fmt(date);
+
+    if (isWeekend(date)) {
+      cell.classList.add('weekend');
+    } else {
+      if (date < today) cell.classList.add('past');
+      if (fmt(date) === fmt(today)) cell.classList.add('today');
+      applyAbsenceClass(cell, date);
+      if (!cell.classList.contains('past')) {
+        cell.addEventListener('click', () => handleDayClick(date));
+        cell.addEventListener('mouseenter', () => handleDayHover(date));
+      }
+    }
+    grid.appendChild(cell);
+  }
+  return card;
+}
+
+function applyAbsenceClass(cell, date) {
+  const ds = fmt(date);
+  for (const a of absences) {
+    if (!a.start || !a.end) continue;
+    const s = a.start, e = a.end;
+    if (ds >= s && ds <= e) {
+      const cls = a.type === 'Vacation' ? 'vacation' : 'sick';
+      cell.classList.add(cls);
+      if (a.type === 'Vacation') {
+        if (ds === s && ds === e) cell.classList.add('range-single');
+        else if (ds === s)        cell.classList.add('range-start');
+        else if (ds === e)        cell.classList.add('range-end');
+      }
+      break;
+    }
+  }
+}
+
+// ── Interaction ───────────────────────────────────────────────────────────────
+function handleDayClick(date) {
+  if (!currentEmpId) { toast('Please select an employee first.', 'error'); return; }
+
+  if (mode === 'sick') {
+    pendingStart = date;
+    pendingEnd   = date;
+    pendingType  = 'Sick day';
+    showModal();
+    return;
+  }
+
+  if (mode === 'vacation-start') {
+    rangeStart = date;
+    rangeEnd   = date;
+    mode = 'vacation-end';
+    document.getElementById('modeHint').textContent = 'Now click the end date';
+    return;
+  }
+
+  if (mode === 'vacation-end') {
+    let s = rangeStart, e = date;
+    if (e < s) [s, e] = [e, s];
+    pendingStart = s;
+    pendingEnd   = e;
+    pendingType  = 'Vacation';
+    cancelMode();
+    showModal();
+    return;
+  }
+}
+
+function handleDayHover(date) {
+  if (mode !== 'vacation-end' || !rangeStart) return;
+  rangeEnd = date;
+  refreshRangeHighlight();
+}
+
+function refreshRangeHighlight() {
+  document.querySelectorAll('.day.in-range, .day.selecting').forEach(el => {
+    el.classList.remove('in-range','selecting');
+  });
+  if (mode !== 'vacation-end' || !rangeStart || !rangeEnd) return;
+  let s = rangeStart, e = rangeEnd;
+  if (e < s) [s, e] = [e, s];
+  const cur = new Date(s);
+  while (cur <= e) {
+    if (!isWeekend(cur)) {
+      const cell = document.querySelector(`.day[data-date="${fmt(cur)}"]`);
+      if (cell) cell.classList.add(fmt(cur)===fmt(s)||fmt(cur)===fmt(e) ? 'selecting' : 'in-range');
+    }
+    cur.setDate(cur.getDate()+1);
+  }
+}
+
+// ── Mode buttons ─────────────────────────────────────────────────────────────
+document.getElementById('btnVacation').addEventListener('click', () => {
+  if (!currentEmpId) { toast('Select an employee first.', 'error'); return; }
+  mode = 'vacation-start';
+  rangeStart = rangeEnd = null;
+  document.getElementById('modeHint').textContent = 'Click the start date of your vacation';
+  document.getElementById('btnCancel').style.display = 'inline-flex';
+  document.getElementById('btnVacation').disabled = true;
+  document.getElementById('btnSick').disabled = true;
+});
+
+document.getElementById('btnSick').addEventListener('click', () => {
+  if (!currentEmpId) { toast('Select an employee first.', 'error'); return; }
+  mode = 'sick';
+  document.getElementById('modeHint').textContent = 'Tap the sick day on the calendar';
+  document.getElementById('btnCancel').style.display = 'inline-flex';
+  document.getElementById('btnVacation').disabled = true;
+  document.getElementById('btnSick').disabled = true;
+});
+
+document.getElementById('btnCancel').addEventListener('click', cancelMode);
+
+function cancelMode() {
+  mode = rangeStart = rangeEnd = null;
+  document.getElementById('modeHint').textContent = '';
+  document.getElementById('btnCancel').style.display = 'none';
+  document.getElementById('btnVacation').disabled = false;
+  document.getElementById('btnSick').disabled = false;
+  document.querySelectorAll('.day.in-range, .day.selecting').forEach(el => el.classList.remove('in-range','selecting'));
+}
+
+// ── Year nav ─────────────────────────────────────────────────────────────────
+document.getElementById('prevYear').addEventListener('click', () => { year--; renderAll(); cancelMode(); });
+document.getElementById('nextYear').addEventListener('click', () => { year++; renderAll(); cancelMode(); });
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function showModal() {
+  const empName = employees.find(e => e.id === currentEmpId)?.name || '?';
+  const isVac   = pendingType === 'Vacation';
+  const wdays   = workingDaysBetween(pendingStart, pendingEnd);
+  const used    = countUsed(pendingType);
+  const allot   = isVac ? VACATION_ALLOT : SICK_ALLOT;
+  const left    = allot - used;
+
+  document.getElementById('modalTitle').textContent = isVac ? '🏖 Book Vacation' : '🤒 Log Sick Day';
+  document.getElementById('modalInfo').innerHTML = `
+    <strong>${empName}</strong>
+    ${isVac ? `${fmt(pendingStart)} → ${fmt(pendingEnd)}` : fmt(pendingStart)}<br>
+    <b>${wdays} working day${wdays!==1?'s':''}</b> &nbsp;·&nbsp;
+    ${left} remaining → <b>${left - wdays} after booking</b>
+    ${left - wdays < 0 ? ' ⚠ Over allotment!' : ''}
+  `;
+  const btn = document.getElementById('modalConfirm');
+  btn.className = `btn ${isVac ? 'btn-vacation' : 'btn-sick'}`;
+  btn.textContent = 'Confirm & Submit';
+  document.getElementById('modalNote').value = '';
+  document.getElementById('modal').classList.add('open');
+}
+
+document.getElementById('modalCancel').addEventListener('click', () => {
+  document.getElementById('modal').classList.remove('open');
+  pendingStart = pendingEnd = pendingType = null;
+});
+
+document.getElementById('modalConfirm').addEventListener('click', submitAbsence);
+
+async function submitAbsence() {
+  const btn = document.getElementById('modalConfirm');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  const wdays = workingDaysBetween(pendingStart, pendingEnd);
+  const fields = {
+    'Person':       [currentEmpRecordId],
+    'Type':         pendingType,
+    'Start date':   fmt(pendingStart),
+    'End date':     fmt(pendingEnd),
+    'Working Days': wdays,
+    'Status':       'Approved',
+  };
+  const note = document.getElementById('modalNote').value.trim();
+  if (note) fields['Notes'] = note;
+
+  try {
+    await atCreate(TABLE_ABSENCE, fields);
+    // optimistic local update
+    absences.push({ type: pendingType, start: fmt(pendingStart), end: fmt(pendingEnd), workingDays: wdays, status: 'Approved' });
+    updateBadges();
+    renderAll();
+    document.getElementById('modal').classList.remove('open');
+    toast(`✓ ${pendingType} booked for ${wdays} day${wdays!==1?'s':''}`, 'success');
+    pendingStart = pendingEnd = pendingType = null;
+  } catch(e) {
+    toast(`Error: ${e.message}`, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Confirm & Submit';
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type='') {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── Service Worker ────────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(console.warn);
+}
+
+// ── Setup screen ─────────────────────────────────────────────────────────────
+async function saveSetup() {
+  const base  = document.getElementById('setupBase').value.trim();
+  const token = document.getElementById('setupToken').value.trim();
+  const err   = document.getElementById('setupError');
+  const btn   = document.getElementById('setupSave');
+  if (!base || !token) { err.textContent = 'Both fields are required.'; err.style.display='block'; return; }
+  btn.textContent = 'Connecting…'; btn.disabled = true; err.style.display='none';
+  // Quick validation: try fetching the Team Members table
+  try {
+    const r = await fetch(`https://api.airtable.com/v0/${base}/${encodeURIComponent('Team Members')}?maxRecords=1`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!r.ok) throw new Error(`Airtable error ${r.status}`);
+    localStorage.setItem('at_base', base);
+    localStorage.setItem('at_token', token);
+    AIRTABLE_BASE  = base;
+    AIRTABLE_TOKEN = token;
+    document.getElementById('setupScreen').style.display = 'none';
+    init();
+  } catch(e) {
+    err.textContent = 'Could not connect. Check your Base ID and Token.';
+    err.style.display = 'block';
+    btn.textContent = 'Connect to Airtable →'; btn.disabled = false;
+  }
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+if (AIRTABLE_BASE && AIRTABLE_TOKEN) {
+  init();
+} else {
+  document.getElementById('setupScreen').style.display = 'flex';
+  document.getElementById('loadingBanner').style.display = 'none';
+}
+</script>
+</body>
+</html>

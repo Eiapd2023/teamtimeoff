@@ -1,4 +1,4 @@
-const CACHE = 'team-time-off-v8';
+const CACHE = 'team-time-off-v9';
 const PRECACHE = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {

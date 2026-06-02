@@ -27,16 +27,14 @@
       align-items: center;
       justify-content: space-between;
       box-shadow: 0 2px 6px rgba(0,0,0,.2);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      position: sticky; top: 0; z-index: 100;
     }
     .header-left { display: flex; align-items: center; gap: 10px; }
     .header-logo { height: 32px; border-radius: 4px; background: #fff; padding: 2px; }
     .header-title { font-size: 1rem; font-weight: 700; }
     .header-sub { font-size: .78rem; opacity: .7; margin-left: 6px; }
-    .header-user { font-size: .82rem; text-align: right; }
-    .header-user a { color: rgba(255,255,255,.6); font-size: .72rem; text-decoration: none; margin-left: 8px; }
+    .header-user { font-size: .82rem; display: flex; align-items: center; gap: 10px; }
+    .header-user a { color: rgba(255,255,255,.65); font-size: .75rem; text-decoration: none; }
     .header-user a:hover { text-decoration: underline; }
 
     /* ── Layout ── */
@@ -44,46 +42,29 @@
 
     /* ── Allotment bar ── */
     .allotment-bar {
-      background: #fff;
-      border: 1px solid #d8dde4;
-      border-radius: 6px;
-      padding: 14px 20px;
-      display: flex;
-      gap: 32px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
+      background: #fff; border: 1px solid #d8dde4; border-radius: 6px;
+      padding: 14px 20px; display: flex; gap: 32px; margin-bottom: 16px; flex-wrap: wrap;
     }
     .allotment-item { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 200px; }
     .allotment-label { font-size: .8rem; font-weight: 600; color: #5a6a7a; white-space: nowrap; min-width: 100px; }
     .allotment-track { flex: 1; height: 8px; background: #e8edf2; border-radius: 4px; overflow: hidden; }
     .allotment-fill { height: 100%; border-radius: 4px; transition: width .4s; }
     .allotment-fill.vacation { background: #2d7ab5; }
-    .allotment-fill.sick     { background: #c0392b; }
+    .allotment-fill.sick { background: #c0392b; }
     .allotment-count { font-size: .8rem; font-weight: 600; white-space: nowrap; min-width: 120px; text-align: right; }
     .allotment-count.warn { color: #c0392b; }
 
-    /* ── Calendar section ── */
+    /* ── Calendar ── */
     .calendar-section {
-      background: #fff;
-      border: 1px solid #d8dde4;
-      border-radius: 6px;
-      padding: 16px;
-      margin-bottom: 16px;
+      background: #fff; border: 1px solid #d8dde4; border-radius: 6px;
+      padding: 16px; margin-bottom: 16px;
     }
     .calendar-nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
     }
     .cal-nav-btn {
-      background: #eef1f5;
-      border: 1px solid #d8dde4;
-      border-radius: 4px;
-      width: 30px; height: 30px;
-      cursor: pointer;
-      font-size: 1.1rem;
-      color: #5a6a7a;
+      background: #eef1f5; border: 1px solid #d8dde4; border-radius: 4px;
+      width: 30px; height: 30px; cursor: pointer; font-size: 1.1rem; color: #5a6a7a;
       display: flex; align-items: center; justify-content: center;
     }
     .cal-nav-btn:hover { background: #dce4ed; }
@@ -103,7 +84,12 @@
     }
     .cal-day {
       text-align: center; font-size: .73rem; padding: 3px 1px;
-      border-radius: 3px; line-height: 1.7; cursor: default;
+      border-radius: 3px; line-height: 1.7; cursor: default; position: relative;
+      transition: background .1s;
+    }
+    .cal-day.clickable { cursor: pointer; }
+    .cal-day.clickable:hover:not(.vacation):not(.sick):not(.sel-start):not(.sel-range) {
+      background: rgba(45,122,181,.12);
     }
     .cal-day.weekend { color: #c0ccd8; }
     .cal-day.past:not(.vacation):not(.sick) { color: #c8d4dc; }
@@ -113,7 +99,24 @@
     .cal-day.vacation.range-end   { border-radius: 0 3px 3px 0; }
     .cal-day.vacation.range-mid   { border-radius: 0; }
     .cal-day.sick { background: #c0392b; color: #fff; border-radius: 3px; }
+    /* Selection states */
+    .cal-day.sel-start {
+      background: #1a5a8a; color: #fff; border-radius: 3px;
+      box-shadow: 0 0 0 2px #2d7ab5;
+    }
+    .cal-day.sel-range {
+      background: rgba(45,122,181,.18); border-radius: 0; color: #1a5a8a; font-weight: 600;
+    }
 
+    .cal-hint {
+      display: none; text-align: center; font-size: .8rem; color: #2d7ab5;
+      padding: 8px 12px; background: #eef6ff; border-radius: 4px;
+      margin-top: 12px; border: 1px solid #c0daf5;
+    }
+    .cal-hint button {
+      margin-left: 10px; background: none; border: none; color: #c0392b;
+      cursor: pointer; font-size: .78rem; font-weight: 600;
+    }
     .cal-legend {
       display: flex; gap: 20px; margin-top: 14px;
       justify-content: center; flex-wrap: wrap;
@@ -121,71 +124,48 @@
     .legend-item { display: flex; align-items: center; gap: 5px; font-size: .75rem; color: #5a6a7a; }
     .legend-swatch { width: 12px; height: 12px; border-radius: 2px; }
     .legend-swatch.vacation { background: #2d7ab5; }
-    .legend-swatch.sick     { background: #c0392b; }
-    .legend-swatch.today    { border: 2px solid #f39c12; background: transparent; }
+    .legend-swatch.sick { background: #c0392b; }
+    .legend-swatch.today { border: 2px solid #f39c12; background: transparent; }
 
     /* ── Tabs ── */
     .tabs-bar {
-      display: flex;
-      border: 1px solid #d8dde4;
-      border-bottom: none;
-      border-radius: 6px 6px 0 0;
-      overflow: hidden;
-      background: #eef1f5;
+      display: flex; border: 1px solid #d8dde4; border-bottom: none;
+      border-radius: 6px 6px 0 0; overflow: hidden; background: #eef1f5;
     }
     .tab-btn {
-      padding: 10px 18px;
-      background: #eef1f5;
-      border: none;
-      border-right: 1px solid #d8dde4;
-      cursor: pointer;
-      font-size: .82rem;
-      font-weight: 600;
-      color: #5a6a7a;
-      display: flex; align-items: center; gap: 7px;
-      transition: background .15s;
-      white-space: nowrap;
+      padding: 10px 18px; background: #eef1f5; border: none;
+      border-right: 1px solid #d8dde4; cursor: pointer;
+      font-size: .82rem; font-weight: 600; color: #5a6a7a;
+      display: flex; align-items: center; gap: 7px; transition: background .15s; white-space: nowrap;
     }
     .tab-btn:hover { background: #e2e8ef; }
     .tab-btn.active { background: #fff; color: #2d7ab5; border-bottom: 2px solid #fff; margin-bottom: -1px; }
     .tab-count {
-      background: #8a9ab0; color: #fff;
-      border-radius: 10px; padding: 1px 7px;
-      font-size: .72rem; font-weight: 700;
+      background: #8a9ab0; color: #fff; border-radius: 10px;
+      padding: 1px 7px; font-size: .72rem; font-weight: 700;
     }
     .tab-btn.active .tab-count { background: #2d7ab5; }
 
     /* ── Tab panels ── */
     .tab-panel {
-      background: #fff;
-      border: 1px solid #d8dde4;
-      border-radius: 0 0 6px 6px;
-      padding: 20px;
-      margin-bottom: 20px;
+      background: #fff; border: 1px solid #d8dde4; border-radius: 0 0 6px 6px;
+      padding: 20px; margin-bottom: 20px;
     }
     .tab-panel.hidden { display: none; }
 
-    /* ── Log Absence form ── */
+    /* ── Log form ── */
     .form-type-toggle {
-      display: flex;
-      border: 1px solid #d8dde4;
-      border-radius: 4px;
-      overflow: hidden;
-      width: fit-content;
-      margin-bottom: 20px;
+      display: flex; border: 1px solid #d8dde4; border-radius: 4px;
+      overflow: hidden; width: fit-content; margin-bottom: 20px;
     }
     .type-btn {
-      padding: 8px 22px;
-      background: #eef1f5;
-      border: none; border-right: 1px solid #d8dde4;
-      cursor: pointer;
-      font-size: .85rem; font-weight: 600;
-      color: #5a6a7a;
-      transition: background .15s;
+      padding: 8px 22px; background: #eef1f5; border: none;
+      border-right: 1px solid #d8dde4; cursor: pointer;
+      font-size: .85rem; font-weight: 600; color: #5a6a7a; transition: background .15s;
     }
     .type-btn:last-child { border-right: none; }
     .type-btn.active.vacation { background: #2d7ab5; color: #fff; }
-    .type-btn.active.sick     { background: #c0392b; color: #fff; }
+    .type-btn.active.sick { background: #c0392b; color: #fff; }
 
     .form-row { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
     .form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 140px; }
@@ -196,16 +176,11 @@
     .form-group input[type="date"],
     .form-group input[type="text"],
     .form-group textarea {
-      padding: 8px 10px;
-      border: 1px solid #d8dde4;
-      border-radius: 4px;
-      font-size: .88rem;
-      color: #2c3e50;
-      font-family: inherit;
+      padding: 8px 10px; border: 1px solid #d8dde4; border-radius: 4px;
+      font-size: .88rem; color: #2c3e50; font-family: inherit;
     }
     .form-group input:focus, .form-group textarea:focus {
-      outline: none; border-color: #2d7ab5;
-      box-shadow: 0 0 0 2px rgba(45,122,181,.15);
+      outline: none; border-color: #2d7ab5; box-shadow: 0 0 0 2px rgba(45,122,181,.15);
     }
     .form-group textarea { resize: vertical; min-height: 64px; }
     .days-note { font-size: .8rem; color: #5a6a7a; margin-top: -8px; margin-bottom: 12px; }
@@ -213,49 +188,39 @@
 
     /* File upload */
     .file-upload-area {
-      border: 2px dashed #d8dde4;
-      border-radius: 6px;
-      padding: 14px 16px;
-      background: #f8fafc;
-      margin-bottom: 14px;
+      border: 2px dashed #d8dde4; border-radius: 6px;
+      padding: 14px 16px; background: #f8fafc; margin-bottom: 14px;
     }
     .file-upload-label {
-      display: inline-block;
-      cursor: pointer;
-      color: #2d7ab5;
-      font-weight: 600;
-      font-size: .85rem;
-      text-decoration: underline;
+      display: inline-block; cursor: pointer; color: #2d7ab5;
+      font-weight: 600; font-size: .85rem; text-decoration: underline;
     }
     .file-upload-area input[type="file"] { display: none; }
     .file-note { font-size: .75rem; color: #8a9ab0; margin-top: 5px; }
     .file-chip {
       display: inline-flex; align-items: center; gap: 6px;
-      background: #ddeef8; padding: 3px 10px;
-      border-radius: 4px; font-size: .8rem; margin-top: 7px;
-      color: #2d7ab5;
+      background: #ddeef8; padding: 3px 10px; border-radius: 4px;
+      font-size: .8rem; margin-top: 7px; color: #2d7ab5;
     }
     .file-remove { cursor: pointer; color: #c0392b; font-weight: 700; margin-left: 4px; }
 
     /* Buttons */
     .form-actions { display: flex; gap: 10px; margin-top: 8px; }
     .btn {
-      padding: 9px 22px;
-      border: none; border-radius: 4px;
-      font-size: .85rem; font-weight: 600;
-      cursor: pointer; transition: opacity .15s;
+      padding: 9px 22px; border: none; border-radius: 4px;
+      font-size: .85rem; font-weight: 600; cursor: pointer; transition: opacity .15s;
     }
     .btn:hover { opacity: .88; }
     .btn:disabled { opacity: .45; cursor: not-allowed; }
     .btn-vacation { background: #2d7ab5; color: #fff; }
-    .btn-sick     { background: #c0392b; color: #fff; }
+    .btn-sick { background: #c0392b; color: #fff; }
     .btn-secondary { background: #eef1f5; color: #5a6a7a; border: 1px solid #d8dde4; }
 
     /* ── Absence table ── */
     .absence-table { width: 100%; border-collapse: collapse; }
     .absence-table th {
-      text-align: left; font-size: .7rem; font-weight: 700;
-      color: #8a9ab0; text-transform: uppercase; letter-spacing: .05em;
+      text-align: left; font-size: .7rem; font-weight: 700; color: #8a9ab0;
+      text-transform: uppercase; letter-spacing: .05em;
       padding: 6px 10px 10px; border-bottom: 2px solid #d8dde4;
     }
     .absence-table td {
@@ -264,24 +229,19 @@
     }
     .absence-table tr:last-child td { border-bottom: none; }
     .absence-table tr:hover td { background: #f8fafc; }
-    .badge-type {
-      display: inline-block; padding: 2px 8px;
-      border-radius: 3px; font-size: .72rem; font-weight: 700;
-    }
+    .badge-type { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: .72rem; font-weight: 700; }
     .badge-type.vacation { background: #ddeef8; color: #2d7ab5; }
-    .badge-type.sick     { background: #fde8e8; color: #c0392b; }
+    .badge-type.sick { background: #fde8e8; color: #c0392b; }
     .badge-status {
-      display: inline-block; padding: 2px 8px;
-      border-radius: 3px; font-size: .72rem; font-weight: 700;
-      background: #e6f6ee; color: #27ae60;
+      display: inline-block; padding: 2px 8px; border-radius: 3px;
+      font-size: .72rem; font-weight: 700; background: #e6f6ee; color: #27ae60;
     }
     .empty-state { text-align: center; padding: 32px; color: #8a9ab0; font-size: .88rem; }
 
     /* ── Loading ── */
     #loadingBanner { text-align: center; padding: 80px 20px; color: #8a9ab0; }
     .spinner {
-      width: 28px; height: 28px;
-      border: 3px solid #d8dde4; border-top-color: #2d7ab5;
+      width: 28px; height: 28px; border: 3px solid #d8dde4; border-top-color: #2d7ab5;
       border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 12px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -289,12 +249,10 @@
     /* ── Toast ── */
     .toast-wrap {
       position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-      z-index: 999; display: flex; flex-direction: column;
-      gap: 8px; pointer-events: none;
+      z-index: 999; display: flex; flex-direction: column; gap: 8px; pointer-events: none;
     }
     .toast {
-      background: #2c3e50; color: #fff;
-      padding: 10px 20px; border-radius: 6px;
+      background: #2c3e50; color: #fff; padding: 10px 20px; border-radius: 6px;
       font-size: .85rem; box-shadow: 0 4px 12px rgba(0,0,0,.2);
       animation: toastIn .25s ease; white-space: nowrap;
     }
@@ -305,49 +263,43 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── Setup screen ── */
-    .setup-overlay {
-      display: none; position: fixed; inset: 0;
-      background: #eef1f5; z-index: 999;
+    /* ── Overlays (setup / login) ── */
+    .overlay {
+      display: none; position: fixed; inset: 0; background: #eef1f5; z-index: 999;
       align-items: center; justify-content: center; padding: 20px;
     }
-    .setup-card {
-      background: #fff; border: 1px solid #d8dde4;
-      border-radius: 8px; padding: 32px;
-      max-width: 420px; width: 100%;
-      box-shadow: 0 4px 20px rgba(0,0,0,.1);
+    .overlay-card {
+      background: #fff; border: 1px solid #d8dde4; border-radius: 8px; padding: 32px;
+      max-width: 400px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,.1);
     }
-    .setup-logo { text-align: center; margin-bottom: 24px; }
-    .setup-logo img { height: 48px; border-radius: 6px; }
-    .setup-title { font-size: 1rem; font-weight: 700; color: #1a5a8a; margin-top: 10px; }
-    .setup-sub { font-size: .8rem; color: #8a9ab0; margin-top: 4px; }
-    .setup-label {
+    .overlay-logo { text-align: center; margin-bottom: 24px; }
+    .overlay-logo img { height: 48px; border-radius: 6px; }
+    .overlay-title { font-size: 1rem; font-weight: 700; color: #1a5a8a; margin-top: 10px; }
+    .overlay-sub { font-size: .8rem; color: #8a9ab0; margin-top: 4px; }
+    .ol-label {
       display: block; font-size: .72rem; font-weight: 700; color: #5a6a7a;
       text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px;
     }
-    .setup-input {
-      width: 100%; padding: 9px 12px;
-      border: 1px solid #d8dde4; border-radius: 4px;
-      font-size: .88rem; margin-bottom: 14px;
-      font-family: monospace; color: #2c3e50;
+    .ol-input {
+      width: 100%; padding: 9px 12px; border: 1px solid #d8dde4; border-radius: 4px;
+      font-size: .9rem; margin-bottom: 14px; color: #2c3e50; font-family: inherit;
     }
-    .setup-input:focus { outline: none; border-color: #2d7ab5; }
-    .setup-select {
-      width: 100%; padding: 9px 12px;
-      border: 1px solid #d8dde4; border-radius: 4px;
-      font-size: .88rem; margin-bottom: 20px;
-      font-family: inherit; color: #2c3e50; background: #fff;
+    .ol-input:focus { outline: none; border-color: #2d7ab5; }
+    .ol-note { font-size: .73rem; color: #8a9ab0; margin-bottom: 14px; }
+    .ol-btn {
+      width: 100%; padding: 11px; background: linear-gradient(135deg,#1a5a8a,#2d7ab5);
+      color: #fff; border: none; border-radius: 4px; font-size: .9rem; font-weight: 700; cursor: pointer;
     }
-    .setup-btn {
-      width: 100%; padding: 11px;
-      background: linear-gradient(135deg, #1a5a8a, #2d7ab5);
-      color: #fff; border: none; border-radius: 4px;
-      font-size: .9rem; font-weight: 700; cursor: pointer;
+    .ol-btn.green { background: linear-gradient(135deg,#4a7c2a,#6ab040); }
+    .ol-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .ol-error { color: #c0392b; font-size: .8rem; margin-top: 8px; display: none; }
+    .ol-link { font-size: .75rem; color: #2d7ab5; cursor: pointer; text-decoration: underline; margin-top: 10px; display: block; text-align: center; }
+
+    /* First-time password note */
+    .first-time-note {
+      background: #eef6ff; border: 1px solid #c0daf5; border-radius: 4px;
+      padding: 8px 12px; font-size: .78rem; color: #2d7ab5; margin-bottom: 14px; display: none;
     }
-    .setup-btn.green { background: linear-gradient(135deg, #4a7c2a, #6ab040); }
-    .setup-btn:disabled { opacity: .5; cursor: not-allowed; }
-    .setup-note { font-size: .73rem; color: #8a9ab0; margin-bottom: 14px; }
-    .setup-error { color: #c0392b; font-size: .8rem; margin-top: 8px; display: none; }
   </style>
 </head>
 <body>
@@ -370,29 +322,25 @@
   Loading...
 </div>
 
-<!-- App (shown after load) -->
+<!-- App -->
 <div id="appMain" style="display:none">
   <div class="main">
 
-    <!-- Allotment bar -->
+    <!-- Allotment -->
     <div class="allotment-bar">
       <div class="allotment-item">
         <span class="allotment-label">Vacation Days</span>
-        <div class="allotment-track">
-          <div class="allotment-fill vacation" id="fillVac" style="width:0%"></div>
-        </div>
+        <div class="allotment-track"><div class="allotment-fill vacation" id="fillVac" style="width:0%"></div></div>
         <span class="allotment-count" id="countVac">Loading...</span>
       </div>
       <div class="allotment-item">
         <span class="allotment-label">Sick Days</span>
-        <div class="allotment-track">
-          <div class="allotment-fill sick" id="fillSick" style="width:0%"></div>
-        </div>
+        <div class="allotment-track"><div class="allotment-fill sick" id="fillSick" style="width:0%"></div></div>
         <span class="allotment-count" id="countSick">Loading...</span>
       </div>
     </div>
 
-    <!-- 3-month calendar -->
+    <!-- Calendar -->
     <div class="calendar-section">
       <div class="calendar-nav">
         <button class="cal-nav-btn" onclick="calShift(-3)">&#8249;</button>
@@ -400,6 +348,10 @@
         <button class="cal-nav-btn" onclick="calShift(3)">&#8250;</button>
       </div>
       <div class="months-row" id="monthsRow"></div>
+      <div class="cal-hint" id="calHint">
+        <span id="calHintText"></span>
+        <button onclick="cancelCalSel()">Cancel</button>
+      </div>
       <div class="cal-legend">
         <div class="legend-item"><div class="legend-swatch vacation"></div> Vacation</div>
         <div class="legend-item"><div class="legend-swatch sick"></div> Sick Day</div>
@@ -408,7 +360,7 @@
     </div>
 
     <!-- Tabs -->
-    <div class="tabs-bar">
+    <div class="tabs-bar" id="tabsBar">
       <button class="tab-btn active" onclick="switchTab(this,'log')">Log Absence</button>
       <button class="tab-btn" onclick="switchTab(this,'upcoming')">
         Upcoming Absences <span class="tab-count" id="countUpcoming">0</span>
@@ -418,7 +370,7 @@
       </button>
     </div>
 
-    <!-- Log Absence -->
+    <!-- Log -->
     <div class="tab-panel" id="panel-log">
       <div class="form-type-toggle">
         <button class="type-btn active vacation" id="btnVacType" onclick="setLogType('Vacation')">Vacation</button>
@@ -488,30 +440,49 @@
 <!-- Toast -->
 <div class="toast-wrap" id="toastWrap"></div>
 
-<!-- Setup overlay -->
-<div class="setup-overlay" id="setupScreen">
-  <div class="setup-card">
-    <div class="setup-logo">
+<!-- Setup overlay (admin credentials, one-time per device) -->
+<div class="overlay" id="setupScreen">
+  <div class="overlay-card">
+    <div class="overlay-logo">
       <img src="icon-192.png" alt="EIAPD" />
-      <div class="setup-title">EIAPD Team Time Off</div>
-      <div class="setup-sub">One-time setup &mdash; stays in this browser only</div>
+      <div class="overlay-title">EIAPD Team Time Off</div>
+      <div class="overlay-sub">Administrator setup &mdash; one time per device</div>
     </div>
-
     <div id="setupStep1">
-      <label class="setup-label">Airtable Base ID</label>
-      <input class="setup-input" type="text" id="setupBase" placeholder="appXXXXXXXXXXXXXX" />
-      <label class="setup-label">Personal Access Token</label>
-      <input class="setup-input" type="password" id="setupToken" placeholder="patXXXX..." />
-      <div class="setup-note">Your credentials are never uploaded. They stay in this browser only.</div>
-      <button class="setup-btn" id="setupConnectBtn" onclick="connectAirtable()">Connect to Airtable</button>
-      <div class="setup-error" id="setupError"></div>
+      <label class="ol-label">Airtable Base ID</label>
+      <input class="ol-input" type="text" id="setupBase" placeholder="appXXXXXXXXXXXXXX" style="font-family:monospace" />
+      <label class="ol-label">Personal Access Token</label>
+      <input class="ol-input" type="password" id="setupToken" placeholder="patXXXX..." style="font-family:monospace" />
+      <div class="ol-note">These stay in this browser only and are never uploaded.</div>
+      <button class="ol-btn" id="setupConnectBtn" onclick="connectAirtable()">Connect</button>
+      <div class="ol-error" id="setupError"></div>
     </div>
-
     <div id="setupStep2" style="display:none">
-      <label class="setup-label">Connected. Who are you?</label>
-      <select class="setup-select" id="setupWhoSelect"></select>
-      <button class="setup-btn green" onclick="saveIdentity()">This is me &mdash; continue</button>
+      <p style="font-size:.88rem;color:#27ae60;font-weight:600;margin-bottom:16px;">Connected successfully.</p>
+      <p style="font-size:.85rem;color:#5a6a7a;margin-bottom:16px;">Team members can now log in with their username and password. Setup complete.</p>
+      <button class="ol-btn green" onclick="finishSetup()">Go to Login</button>
     </div>
+  </div>
+</div>
+
+<!-- Login overlay (per user) -->
+<div class="overlay" id="loginScreen">
+  <div class="overlay-card">
+    <div class="overlay-logo">
+      <img src="icon-192.png" alt="EIAPD" />
+      <div class="overlay-title">EIAPD Team Time Off</div>
+      <div class="overlay-sub">Sign in to your account</div>
+    </div>
+    <div class="first-time-note" id="firstTimeNote">
+      First time signing in? Your password will be set when you log in for the first time.
+    </div>
+    <label class="ol-label">Username</label>
+    <input class="ol-input" type="text" id="loginUsername" placeholder="e.g. smithj" autocomplete="username" autocapitalize="none" />
+    <label class="ol-label">Password</label>
+    <input class="ol-input" type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" />
+    <button class="ol-btn" id="loginBtn" onclick="login()">Sign In</button>
+    <div class="ol-error" id="loginError"></div>
+    <span class="ol-link" onclick="showSetupFromLogin()">Admin setup</span>
   </div>
 </div>
 
@@ -535,8 +506,9 @@ let absences     = [];
 let calOffset    = 0;
 let logType      = 'Vacation';
 let selectedFile = null;
+let calSel       = { active: false, start: null }; // calendar date selection
 
-// Actual field names auto-detected from Airtable schema
+// Auto-detected field names
 let F = {
   person:      'Person',
   type:        'Type',
@@ -546,6 +518,8 @@ let F = {
   status:      'Status',
   notes:       'Notes',
   certificate: 'Medical Certificate',
+  username:    'Username',
+  password:    'Password',
 };
 
 const today    = new Date(); today.setHours(0,0,0,0);
@@ -563,17 +537,21 @@ function displayDate(str) {
 function isWeekend(d) { return d.getDay()===0 || d.getDay()===6; }
 function workingDays(startStr, endStr) {
   let n=0, cur=new Date(startStr+'T00:00:00');
-  const end = new Date(endStr+'T00:00:00');
-  while (cur<=end) { if (!isWeekend(cur)) n++; cur.setDate(cur.getDate()+1); }
+  const end=new Date(endStr+'T00:00:00');
+  while(cur<=end){ if(!isWeekend(cur)) n++; cur.setDate(cur.getDate()+1); }
   return n;
 }
 function countUsed(type) {
   return absences.filter(a=>a.type===type).reduce((s,a)=>s+(a.workingDays||0),0);
 }
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
 
 // ── Airtable API ──────────────────────────────────────────────────────────────
-function atUrl(table) { return `https://api.airtable.com/v0/${AIRTABLE_BASE}/${encodeURIComponent(table)}`; }
-function atH()        { return { 'Authorization':`Bearer ${AIRTABLE_TOKEN}`, 'Content-Type':'application/json' }; }
+function atUrl(table)  { return `https://api.airtable.com/v0/${AIRTABLE_BASE}/${encodeURIComponent(table)}`; }
+function atH()         { return { 'Authorization':`Bearer ${AIRTABLE_TOKEN}`, 'Content-Type':'application/json' }; }
 
 async function atFetch(table, params='') {
   const r = await fetch(atUrl(table)+params, { headers: atH() });
@@ -585,6 +563,11 @@ async function atCreate(table, fields) {
   if (!r.ok) throw new Error(`Airtable ${r.status}: ${await r.text()}`);
   return r.json();
 }
+async function atPatch(table, recordId, fields) {
+  const r = await fetch(`${atUrl(table)}/${recordId}`, { method:'PATCH', headers:atH(), body:JSON.stringify({fields}) });
+  if (!r.ok) throw new Error(`Airtable ${r.status}: ${await r.text()}`);
+  return r.json();
+}
 async function loadAllPages(table, params='') {
   let records=[], offset=null;
   do {
@@ -593,7 +576,7 @@ async function loadAllPages(table, params='') {
     const data = await atFetch(table, p);
     records.push(...data.records);
     offset = data.offset;
-  } while (offset);
+  } while(offset);
   return records;
 }
 async function uploadAttachment(recordId, file) {
@@ -601,59 +584,149 @@ async function uploadAttachment(recordId, file) {
   fd.append('file', file, file.name);
   fd.append('filename', file.name);
   fd.append('contentType', file.type||'application/octet-stream');
-  fd.append('fieldName', 'Medical Certificate');
-  const r = await fetch(
-    `https://content.airtable.com/v0/${AIRTABLE_BASE}/${recordId}/uploadAttachment`,
-    { method:'POST', headers:{'Authorization':`Bearer ${AIRTABLE_TOKEN}`}, body:fd }
-  );
+  fd.append('fieldName', F.certificate);
+  const r = await fetch(`https://content.airtable.com/v0/${AIRTABLE_BASE}/${recordId}/uploadAttachment`, {
+    method:'POST', headers:{'Authorization':`Bearer ${AIRTABLE_TOKEN}`}, body:fd,
+  });
   if (!r.ok) throw new Error(`Upload ${r.status}`);
   return r.json();
 }
 
-// ── Field name auto-detection ─────────────────────────────────────────────────
+// ── Field name detection ───────────────────────────────────────────────────────
 async function detectFields() {
   try {
-    const r = await fetch(
-      `https://api.airtable.com/v0/meta/bases/${AIRTABLE_BASE}/tables`,
-      { headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` } }
-    );
-    if (!r.ok) return; // non-fatal, keep defaults
+    const r = await fetch(`https://api.airtable.com/v0/meta/bases/${AIRTABLE_BASE}/tables`,
+      { headers:{'Authorization':`Bearer ${AIRTABLE_TOKEN}`} });
+    if (!r.ok) return;
     const data = await r.json();
-    const table = data.tables.find(t => t.name.toLowerCase() === TABLE_ABSENCE.toLowerCase());
+    const table = data.tables.find(t=>t.name.toLowerCase()===TABLE_ABSENCE.toLowerCase());
     if (!table) return;
     for (const field of table.fields) {
       const lo = field.name.toLowerCase().trim();
-      if (lo === 'person')             F.person      = field.name;
-      else if (lo === 'type')          F.type        = field.name;
-      else if (lo === 'start date')    F.startDate   = field.name;
-      else if (lo === 'end date')      F.endDate     = field.name;
-      else if (lo === 'working days')  F.workingDays = field.name;
-      else if (lo === 'status')        F.status      = field.name;
-      else if (lo === 'notes')         F.notes       = field.name;
-      else if (lo === 'medical certificate') F.certificate = field.name;
+      if      (lo==='person')              F.person      = field.name;
+      else if (lo==='type')                F.type        = field.name;
+      else if (lo==='start date')          F.startDate   = field.name;
+      else if (lo==='end date')            F.endDate     = field.name;
+      else if (lo==='working days')        F.workingDays = field.name;
+      else if (lo==='status')              F.status      = field.name;
+      else if (lo==='notes')               F.notes       = field.name;
+      else if (lo==='medical certificate') F.certificate = field.name;
     }
+    // Also detect Team Members fields
+    const memTable = data.tables.find(t=>t.name.toLowerCase()===TABLE_MEMBERS.toLowerCase());
+    if (memTable) {
+      for (const field of memTable.fields) {
+        const lo = field.name.toLowerCase().trim();
+        if      (lo==='username') F.username = field.name;
+        else if (lo==='password') F.password = field.name;
+      }
+    }
+  } catch(e) { console.warn('Field detection skipped:', e.message); }
+}
+
+// ── Authentication ────────────────────────────────────────────────────────────
+async function login() {
+  const username = document.getElementById('loginUsername').value.trim().toLowerCase();
+  const password = document.getElementById('loginPassword').value;
+  const errEl    = document.getElementById('loginError');
+  const btn      = document.getElementById('loginBtn');
+  errEl.style.display='none';
+  if (!username||!password) { showLoginErr('Please enter your username and password.'); return; }
+  btn.textContent='Signing in...'; btn.disabled=true;
+  try {
+    await detectFields();
+    const formula = encodeURIComponent(`LOWER({${F.username}})="${username}"`);
+    const data = await atFetch(TABLE_MEMBERS, `?filterByFormula=${formula}`);
+    if (!data.records.length) { showLoginErr('Username not found.'); btn.textContent='Sign In'; btn.disabled=false; return; }
+    const member     = data.records[0];
+    const storedHash = member.fields[F.password] || '';
+    const inputHash  = await sha256(password);
+
+    if (!storedHash) {
+      // First login — set the password
+      await atPatch(TABLE_MEMBERS, member.id, { [F.password]: inputHash });
+    } else if (storedHash !== inputHash) {
+      showLoginErr('Incorrect password.');
+      btn.textContent='Sign In'; btn.disabled=false;
+      return;
+    }
+
+    localStorage.setItem('at_emp_id',   member.id);
+    localStorage.setItem('at_emp_name', member.fields['Name']||member.fields[F.username]);
+    currentEmpId   = member.id;
+    currentEmpName = member.fields['Name']||member.fields[F.username];
+    document.getElementById('loginScreen').style.display='none';
+    init();
   } catch(e) {
-    console.warn('Schema detection skipped:', e.message);
+    showLoginErr(e.message);
+    btn.textContent='Sign In'; btn.disabled=false;
   }
+}
+
+function showLoginErr(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent=msg; el.style.display='block';
+}
+
+function logout() {
+  localStorage.removeItem('at_emp_id');
+  localStorage.removeItem('at_emp_name');
+  location.reload();
+}
+
+function showSetupFromLogin() {
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('setupScreen').style.display='flex';
+}
+
+// ── Setup ─────────────────────────────────────────────────────────────────────
+async function connectAirtable() {
+  const base  = document.getElementById('setupBase').value.trim();
+  const token = document.getElementById('setupToken').value.trim();
+  const errEl = document.getElementById('setupError');
+  const btn   = document.getElementById('setupConnectBtn');
+  errEl.style.display='none';
+  if (!base||!token) { errEl.textContent='Both fields are required.'; errEl.style.display='block'; return; }
+  btn.textContent='Connecting...'; btn.disabled=true;
+  try {
+    const r = await fetch(
+      `https://api.airtable.com/v0/${base}/${encodeURIComponent(TABLE_MEMBERS)}?maxRecords=1`,
+      { headers:{'Authorization':`Bearer ${token}`} }
+    );
+    if (!r.ok) throw new Error(`Error ${r.status}`);
+    localStorage.setItem('at_base', base);
+    localStorage.setItem('at_token', token);
+    AIRTABLE_BASE=base; AIRTABLE_TOKEN=token;
+    document.getElementById('setupStep1').style.display='none';
+    document.getElementById('setupStep2').style.display='block';
+  } catch(e) {
+    errEl.textContent='Could not connect. Check your Base ID and Token.';
+    errEl.style.display='block';
+    btn.textContent='Connect'; btn.disabled=false;
+  }
+}
+
+function finishSetup() {
+  document.getElementById('setupScreen').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
   document.getElementById('headerUser').innerHTML =
-    `${currentEmpName} <a href="#" onclick="switchUser();return false;">Not you?</a>`;
+    `${currentEmpName} <a href="#" onclick="logout();return false;">Sign out</a>`;
   try {
     await detectFields();
     await loadAbsences();
     updateAllotment();
     renderCalendar();
     renderLists();
-    // Default form dates
     document.getElementById('startDate').value = todayStr;
     document.getElementById('endDate').value   = todayStr;
     document.getElementById('sickDate').value  = todayStr;
     updateWorkingDays();
-    document.getElementById('loadingBanner').style.display = 'none';
-    document.getElementById('appMain').style.display = 'block';
+    document.getElementById('loadingBanner').style.display='none';
+    document.getElementById('appMain').style.display='block';
   } catch(e) {
     document.getElementById('loadingBanner').innerHTML =
       `<p style="color:#c0392b;margin-top:40px">Failed to load: ${e.message}</p>`;
@@ -664,7 +737,7 @@ async function init() {
 async function loadAbsences() {
   const formula = encodeURIComponent(`FIND("${currentEmpId}",ARRAYJOIN({Person}))`);
   const recs = await loadAllPages(TABLE_ABSENCE, `?filterByFormula=${formula}`);
-  absences = recs.map(r => ({
+  absences = recs.map(r=>({
     id:          r.id,
     type:        r.fields[F.type]        || '',
     start:       r.fields[F.startDate]   || '',
@@ -680,17 +753,14 @@ function updateAllotment() {
   const sickUsed = countUsed('Sick day');
   const vacLeft  = VACATION_ALLOT - vacUsed;
   const sickLeft = SICK_ALLOT - sickUsed;
-
-  document.getElementById('fillVac').style.width  = `${Math.min(100, vacUsed/VACATION_ALLOT*100)}%`;
-  document.getElementById('fillSick').style.width = `${Math.min(100, sickUsed/SICK_ALLOT*100)}%`;
-
-  const cv = document.getElementById('countVac');
-  cv.textContent = `${vacLeft} of ${VACATION_ALLOT} remaining`;
-  cv.className   = 'allotment-count' + (vacLeft<=3?' warn':'');
-
-  const cs = document.getElementById('countSick');
-  cs.textContent = `${sickLeft} of ${SICK_ALLOT} remaining`;
-  cs.className   = 'allotment-count' + (sickLeft<=2?' warn':'');
+  document.getElementById('fillVac').style.width  = `${Math.min(100,vacUsed/VACATION_ALLOT*100)}%`;
+  document.getElementById('fillSick').style.width = `${Math.min(100,sickUsed/SICK_ALLOT*100)}%`;
+  const cv=document.getElementById('countVac');
+  cv.textContent=`${vacLeft} of ${VACATION_ALLOT} remaining`;
+  cv.className='allotment-count'+(vacLeft<=3?' warn':'');
+  const cs=document.getElementById('countSick');
+  cs.textContent=`${sickLeft} of ${SICK_ALLOT} remaining`;
+  cs.className='allotment-count'+(sickLeft<=2?' warn':'');
 }
 
 // ── Calendar ──────────────────────────────────────────────────────────────────
@@ -698,80 +768,100 @@ function calShift(delta) { calOffset+=delta; renderCalendar(); }
 
 function renderCalendar() {
   const base = new Date(today.getFullYear(), today.getMonth()+calOffset, 1);
-  const m0   = new Date(base.getFullYear(), base.getMonth(),   1);
-  const m1   = new Date(base.getFullYear(), base.getMonth()+1, 1);
-  const m2   = new Date(base.getFullYear(), base.getMonth()+2, 1);
-
-  const label0 = `${MONTH_NAMES[m0.getMonth()]} ${m0.getFullYear()}`;
-  const label2 = `${MONTH_NAMES[m2.getMonth()]}${m2.getFullYear()!==m0.getFullYear()?' '+m2.getFullYear():''}`;
-  document.getElementById('calNavLabel').textContent = `${label0} – ${label2}`;
-
-  const row = document.getElementById('monthsRow');
-  row.innerHTML = '';
-  [m0,m1,m2].forEach(m => row.appendChild(buildMonthCal(m.getFullYear(), m.getMonth())));
+  const months = [0,1,2].map(i=>new Date(base.getFullYear(), base.getMonth()+i, 1));
+  const y0=months[0], y2=months[2];
+  const label = `${MONTH_NAMES[y0.getMonth()]} ${y0.getFullYear()} – ${MONTH_NAMES[y2.getMonth()]}${y2.getFullYear()!==y0.getFullYear()?' '+y2.getFullYear():''}`;
+  document.getElementById('calNavLabel').textContent = label;
+  const row=document.getElementById('monthsRow');
+  row.innerHTML='';
+  months.forEach(m=>row.appendChild(buildMonthCal(m.getFullYear(), m.getMonth())));
 }
 
 function buildMonthCal(y, m) {
-  const wrap = document.createElement('div');
-  wrap.className = 'month-cal';
-
-  const title = document.createElement('div');
-  title.className = 'month-cal-title';
-  title.textContent = `${MONTH_NAMES[m]} ${y}`;
-  wrap.appendChild(title);
-
-  const grid = document.createElement('div');
-  grid.className = 'month-cal-grid';
-
-  ['Mo','Tu','We','Th','Fr','Sa','Su'].forEach(n => {
-    const h = document.createElement('div');
-    h.className = 'cal-dname';
-    h.textContent = n;
-    grid.appendChild(h);
+  const wrap=document.createElement('div'); wrap.className='month-cal';
+  const title=document.createElement('div'); title.className='month-cal-title';
+  title.textContent=`${MONTH_NAMES[m]} ${y}`; wrap.appendChild(title);
+  const grid=document.createElement('div'); grid.className='month-cal-grid';
+  ['Mo','Tu','We','Th','Fr','Sa','Su'].forEach(n=>{
+    const h=document.createElement('div'); h.className='cal-dname'; h.textContent=n; grid.appendChild(h);
   });
-
-  const firstOffset = (new Date(y,m,1).getDay()+6)%7;
-  for (let i=0;i<firstOffset;i++) {
-    const blank = document.createElement('div');
-    blank.className = 'cal-day';
-    grid.appendChild(blank);
-  }
-
-  const daysInMonth = new Date(y,m+1,0).getDate();
-  for (let d=1;d<=daysInMonth;d++) {
-    const date = new Date(y,m,d);
-    const ds   = fmtDate(date);
-    const cell = document.createElement('div');
-    cell.className = 'cal-day';
-    cell.textContent = d;
-
-    if (isWeekend(date)) {
+  const firstOffset=(new Date(y,m,1).getDay()+6)%7;
+  for(let i=0;i<firstOffset;i++){ const b=document.createElement('div'); b.className='cal-day'; grid.appendChild(b); }
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  for(let d=1;d<=daysInMonth;d++){
+    const date=new Date(y,m,d), ds=fmtDate(date);
+    const cell=document.createElement('div'); cell.className='cal-day'; cell.textContent=d;
+    if(isWeekend(date)){
       cell.classList.add('weekend');
     } else {
-      if (date < today) cell.classList.add('past');
-      const abs = absences.find(a => a.start && a.end && ds>=a.start && ds<=a.end);
-      if (abs) {
-        if (abs.type==='Vacation') {
+      if(date<today) cell.classList.add('past');
+      // Existing absences
+      const abs=absences.find(a=>a.start&&a.end&&ds>=a.start&&ds<=a.end);
+      if(abs){
+        if(abs.type==='Vacation'){
           cell.classList.add('vacation');
-          if      (ds===abs.start && ds===abs.end) { cell.classList.add('range-start','range-end'); }
-          else if (ds===abs.start)                 { cell.classList.add('range-start'); }
-          else if (ds===abs.end)                   { cell.classList.add('range-end'); }
-          else                                     { cell.classList.add('range-mid'); }
-        } else {
-          cell.classList.add('sick');
-        }
+          if(ds===abs.start&&ds===abs.end) cell.classList.add('range-start','range-end');
+          else if(ds===abs.start) cell.classList.add('range-start');
+          else if(ds===abs.end)   cell.classList.add('range-end');
+          else                    cell.classList.add('range-mid');
+        } else { cell.classList.add('sick'); }
       }
+      // Calendar selection state
+      if(calSel.active && calSel.start){
+        if(ds===calSel.start) cell.classList.add('sel-start');
+      }
+      // All non-weekend days are clickable
+      cell.classList.add('clickable');
+      cell.addEventListener('click', ()=>handleCalDayClick(ds));
     }
-    if (ds===todayStr) cell.classList.add('today');
+    if(ds===todayStr) cell.classList.add('today');
     grid.appendChild(cell);
   }
-
   wrap.appendChild(grid);
   return wrap;
 }
 
+function handleCalDayClick(ds) {
+  if(!calSel.active){
+    // First click — start selection
+    calSel.active=true; calSel.start=ds;
+    renderCalendar();
+    const hint=document.getElementById('calHint');
+    document.getElementById('calHintText').textContent=
+      `Start: ${displayDate(ds)} — now tap the end date (or tap the same date for a single day)`;
+    hint.style.display='block';
+    // Pre-fill form dates
+    document.getElementById('startDate').value=ds;
+    document.getElementById('endDate').value=ds;
+    updateWorkingDays();
+  } else {
+    // Second click — complete selection
+    let s=calSel.start, e=ds;
+    if(e<s)[s,e]=[e,s];
+    calSel.active=false; calSel.start=null;
+    document.getElementById('calHint').style.display='none';
+    // Multi-day = Vacation; single day stays as current type
+    if(s!==e) setLogType('Vacation');
+    document.getElementById('startDate').value=s;
+    document.getElementById('endDate').value=e;
+    document.getElementById('sickDate').value=s;
+    updateWorkingDays();
+    // Switch to Log tab and scroll to form
+    const logTabBtn=document.querySelector('.tab-btn');
+    switchTab(logTabBtn,'log');
+    setTimeout(()=>document.getElementById('panel-log').scrollIntoView({behavior:'smooth'}),100);
+    renderCalendar();
+  }
+}
+
+function cancelCalSel(){
+  calSel.active=false; calSel.start=null;
+  document.getElementById('calHint').style.display='none';
+  renderCalendar();
+}
+
 // ── Tabs ──────────────────────────────────────────────────────────────────────
-function switchTab(el, name) {
+function switchTab(el, name){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.add('hidden'));
   el.classList.add('active');
@@ -779,230 +869,142 @@ function switchTab(el, name) {
 }
 
 // ── Log form ──────────────────────────────────────────────────────────────────
-function setLogType(type) {
-  logType = type;
-  const isVac = type==='Vacation';
-  document.getElementById('btnVacType').className  = 'type-btn' + (isVac?' active vacation':'');
-  document.getElementById('btnSickType').className = 'type-btn' + (!isVac?' active sick':'');
-  document.getElementById('vacationFields').style.display = isVac ? '' : 'none';
-  document.getElementById('sickFields').style.display     = isVac ? 'none' : '';
-  const btn = document.getElementById('submitBtn');
-  btn.className = isVac ? 'btn btn-vacation' : 'btn btn-sick';
+function setLogType(type){
+  logType=type;
+  const isVac=type==='Vacation';
+  document.getElementById('btnVacType').className='type-btn'+(isVac?' active vacation':'');
+  document.getElementById('btnSickType').className='type-btn'+(!isVac?' active sick':'');
+  document.getElementById('vacationFields').style.display=isVac?'':'none';
+  document.getElementById('sickFields').style.display=isVac?'none':'';
+  document.getElementById('submitBtn').className=isVac?'btn btn-vacation':'btn btn-sick';
 }
 
-function updateWorkingDays() {
-  const s = document.getElementById('startDate').value;
-  const e = document.getElementById('endDate').value;
-  const el = document.getElementById('daysNote');
-  if (s && e && e>=s) {
-    const days = workingDays(s, e);
-    const left = VACATION_ALLOT - countUsed('Vacation');
-    el.textContent = `${days} working day${days!==1?'s':''} · ${left} vacation days remaining`;
-    el.className   = 'days-note' + (days>left?' warn':'');
-  } else {
-    el.textContent = '';
-  }
+function updateWorkingDays(){
+  const s=document.getElementById('startDate').value;
+  const e=document.getElementById('endDate').value;
+  const el=document.getElementById('daysNote');
+  if(s&&e&&e>=s){
+    const days=workingDays(s,e);
+    const left=VACATION_ALLOT-countUsed('Vacation');
+    el.textContent=`${days} working day${days!==1?'s':''} · ${left} vacation days remaining`;
+    el.className='days-note'+(days>left?' warn':'');
+  } else { el.textContent=''; }
 }
 
-function onFileSelected() {
-  const f = document.getElementById('certFile').files[0];
-  selectedFile = f || null;
-  if (f) {
-    document.getElementById('fileName').textContent = f.name;
-    document.getElementById('fileChip').style.display = 'block';
-  }
+function onFileSelected(){
+  const f=document.getElementById('certFile').files[0];
+  selectedFile=f||null;
+  if(f){ document.getElementById('fileName').textContent=f.name; document.getElementById('fileChip').style.display='block'; }
 }
-function clearFile() {
-  selectedFile = null;
-  document.getElementById('certFile').value = '';
-  document.getElementById('fileChip').style.display = 'none';
+function clearFile(){
+  selectedFile=null; document.getElementById('certFile').value='';
+  document.getElementById('fileChip').style.display='none';
 }
-function clearForm() {
-  document.getElementById('startDate').value = todayStr;
-  document.getElementById('endDate').value   = todayStr;
-  document.getElementById('sickDate').value  = todayStr;
-  document.getElementById('absenceNote').value = '';
-  clearFile();
-  updateWorkingDays();
+function clearForm(){
+  document.getElementById('startDate').value=todayStr;
+  document.getElementById('endDate').value=todayStr;
+  document.getElementById('sickDate').value=todayStr;
+  document.getElementById('absenceNote').value='';
+  clearFile(); updateWorkingDays();
 }
 
-async function submitAbsence() {
-  const btn = document.getElementById('submitBtn');
-  btn.disabled = true; btn.textContent = 'Submitting...';
+async function submitAbsence(){
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true; btn.textContent='Submitting...';
   try {
     let startStr, endStr, wdays;
-    if (logType==='Vacation') {
-      startStr = document.getElementById('startDate').value;
-      endStr   = document.getElementById('endDate').value;
-      if (!startStr||!endStr||endStr<startStr) throw new Error('Please select valid start and end dates.');
-      wdays = workingDays(startStr, endStr);
-      if (wdays<1) throw new Error('No working days in the selected range.');
+    if(logType==='Vacation'){
+      startStr=document.getElementById('startDate').value;
+      endStr=document.getElementById('endDate').value;
+      if(!startStr||!endStr||endStr<startStr) throw new Error('Please select valid start and end dates.');
+      wdays=workingDays(startStr,endStr);
+      if(wdays<1) throw new Error('No working days in the selected range.');
     } else {
-      startStr = endStr = document.getElementById('sickDate').value;
-      if (!startStr) throw new Error('Please select a date.');
-      wdays = 1;
+      startStr=endStr=document.getElementById('sickDate').value;
+      if(!startStr) throw new Error('Please select a date.');
+      wdays=1;
     }
-
-    const fields = {
-      [F.person]:      [currentEmpId],
-      [F.type]:        logType,
-      [F.startDate]:   startStr,
-      [F.endDate]:     endStr,
-      [F.workingDays]: wdays,
-      [F.status]:      'Approved',
+    // Note: Working Days is NOT sent — it's a computed field in Airtable
+    const fields={
+      [F.person]:    [currentEmpId],
+      [F.type]:      logType,
+      [F.startDate]: startStr,
+      [F.endDate]:   endStr,
+      [F.status]:    'Approved',
     };
-    const note = document.getElementById('absenceNote').value.trim();
-    if (note) fields[F.notes] = note;
+    const note=document.getElementById('absenceNote').value.trim();
+    if(note) fields[F.notes]=note;
 
-    const result   = await atCreate(TABLE_ABSENCE, fields);
-    const recordId = result.records[0].id;
+    const result=await atCreate(TABLE_ABSENCE, fields);
+    const recordId=result.records[0].id;
 
-    let uploadWarning = false;
-    if (selectedFile && logType==='Sick day') {
-      try { await uploadAttachment(recordId, selectedFile); }
-      catch { uploadWarning = true; }
+    let uploadWarning=false;
+    if(selectedFile&&logType==='Sick day'){
+      try{ await uploadAttachment(recordId, selectedFile); }
+      catch{ uploadWarning=true; }
     }
 
-    absences.push({ id:recordId, type:logType, start:startStr, end:endStr, workingDays:wdays, status:'Approved' });
-    updateAllotment();
-    renderCalendar();
-    renderLists();
-    clearForm();
-
-    if (uploadWarning) {
-      toast('Absence logged. Certificate upload failed — please add it directly in Airtable.', '');
-    } else {
-      toast('Absence submitted successfully.', 'success');
-    }
-  } catch(e) {
-    toast(e.message, 'error');
-  }
-  btn.disabled = false;
-  btn.textContent = 'Submit Absence';
+    absences.push({id:recordId, type:logType, start:startStr, end:endStr, workingDays:wdays, status:'Approved'});
+    updateAllotment(); renderCalendar(); renderLists(); clearForm();
+    toast(uploadWarning?'Absence logged. Certificate upload failed — add it in Airtable.':'Absence submitted successfully.', uploadWarning?'':' success');
+  } catch(e){ toast(e.message,'error'); }
+  btn.disabled=false; btn.textContent='Submit Absence';
 }
 
 // ── Lists ─────────────────────────────────────────────────────────────────────
-function renderLists() {
-  const upcoming = absences.filter(a=>a.end>=todayStr).sort((a,b)=>a.start.localeCompare(b.start));
-  const past     = absences.filter(a=>a.end <todayStr).sort((a,b)=>b.start.localeCompare(a.start));
-
-  document.getElementById('countUpcoming').textContent = upcoming.length;
-  document.getElementById('countPast').textContent     = past.length;
-  document.getElementById('upcomingContent').innerHTML = buildTable(upcoming);
-  document.getElementById('pastContent').innerHTML     = buildTable(past);
+function renderLists(){
+  const upcoming=absences.filter(a=>a.end>=todayStr).sort((a,b)=>a.start.localeCompare(b.start));
+  const past    =absences.filter(a=>a.end <todayStr).sort((a,b)=>b.start.localeCompare(a.start));
+  document.getElementById('countUpcoming').textContent=upcoming.length;
+  document.getElementById('countPast').textContent    =past.length;
+  document.getElementById('upcomingContent').innerHTML=buildTable(upcoming);
+  document.getElementById('pastContent').innerHTML    =buildTable(past);
 }
 
-function buildTable(rows) {
-  if (!rows.length) return '<div class="empty-state">No absences to display.</div>';
+function buildTable(rows){
+  if(!rows.length) return '<div class="empty-state">No absences to display.</div>';
   return `<table class="absence-table">
-    <thead><tr>
-      <th>Type</th><th>Start Date</th><th>End Date</th><th>Duration</th><th>Status</th>
-    </tr></thead>
+    <thead><tr><th>Type</th><th>Start Date</th><th>End Date</th><th>Duration</th><th>Status</th></tr></thead>
     <tbody>${rows.map(a=>`<tr>
       <td><span class="badge-type ${a.type==='Vacation'?'vacation':'sick'}">${a.type}</span></td>
-      <td>${displayDate(a.start)}</td>
-      <td>${displayDate(a.end)}</td>
+      <td>${displayDate(a.start)}</td><td>${displayDate(a.end)}</td>
       <td>${a.workingDays} day${a.workingDays!==1?'s':''}</td>
       <td><span class="badge-status">${a.status}</span></td>
-    </tr>`).join('')}</tbody>
-  </table>`;
+    </tr>`).join('')}</tbody></table>`;
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
-function toast(msg, type='') {
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.textContent = msg;
+function toast(msg, type=''){
+  const el=document.createElement('div');
+  el.className=`toast ${type}`; el.textContent=msg;
   document.getElementById('toastWrap').appendChild(el);
   setTimeout(()=>el.remove(), 4500);
 }
 
-// ── Setup ─────────────────────────────────────────────────────────────────────
-async function connectAirtable() {
-  const base  = document.getElementById('setupBase').value.trim();
-  const token = document.getElementById('setupToken').value.trim();
-  const errEl = document.getElementById('setupError');
-  const btn   = document.getElementById('setupConnectBtn');
-  errEl.style.display='none';
-  if (!base||!token) { errEl.textContent='Both fields are required.'; errEl.style.display='block'; return; }
-  btn.textContent='Connecting...'; btn.disabled=true;
-  try {
-    const r = await fetch(
-      `https://api.airtable.com/v0/${base}/${encodeURIComponent(TABLE_MEMBERS)}?fields[]=Name&sort[0][field]=Name`,
-      { headers:{'Authorization':`Bearer ${token}`} }
-    );
-    if (!r.ok) throw new Error(`Error ${r.status}`);
-    const data = await r.json();
-    localStorage.setItem('at_base', base);
-    localStorage.setItem('at_token', token);
-    AIRTABLE_BASE=base; AIRTABLE_TOKEN=token;
-    document.getElementById('setupWhoSelect').innerHTML =
-      data.records.map(r=>`<option value="${r.id}">${r.fields.Name||'(unnamed)'}</option>`).join('');
-    document.getElementById('setupStep1').style.display='none';
-    document.getElementById('setupStep2').style.display='block';
-  } catch(e) {
-    errEl.textContent='Could not connect. Check your Base ID and Token.';
-    errEl.style.display='block';
-    btn.textContent='Connect to Airtable'; btn.disabled=false;
-  }
-}
-
-function saveIdentity() {
-  const sel  = document.getElementById('setupWhoSelect');
-  const id   = sel.value;
-  const name = sel.options[sel.selectedIndex].text;
-  localStorage.setItem('at_emp_id',   id);
-  localStorage.setItem('at_emp_name', name);
-  currentEmpId=id; currentEmpName=name;
-  document.getElementById('setupScreen').style.display='none';
-  init();
-}
-
-function switchUser() {
-  localStorage.removeItem('at_emp_id');
-  localStorage.removeItem('at_emp_name');
-  location.reload();
-}
-
-// ── Service worker — register and force update immediately ────────────────────
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').then(reg => {
-    reg.update(); // check for new sw.js on every page load
-    reg.addEventListener('updatefound', () => {
-      const newWorker = reg.installing;
-      newWorker.addEventListener('statechange', () => {
-        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          // New version available — reload silently
-          window.location.reload();
-        }
+// ── Service worker ────────────────────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    reg.update();
+    reg.addEventListener('updatefound',()=>{
+      const nw=reg.installing;
+      nw.addEventListener('statechange',()=>{
+        if(nw.state==='installed'&&navigator.serviceWorker.controller) window.location.reload();
       });
     });
   }).catch(console.warn);
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
-if (AIRTABLE_BASE && AIRTABLE_TOKEN && currentEmpId) {
-  init();
-} else if (AIRTABLE_BASE && AIRTABLE_TOKEN) {
-  // Has creds, needs identity
-  (async()=>{
-    try {
-      const r = await fetch(
-        `https://api.airtable.com/v0/${AIRTABLE_BASE}/${encodeURIComponent(TABLE_MEMBERS)}?fields[]=Name&sort[0][field]=Name`,
-        { headers:{'Authorization':`Bearer ${AIRTABLE_TOKEN}`} }
-      );
-      const data = await r.json();
-      document.getElementById('setupWhoSelect').innerHTML =
-        data.records.map(r=>`<option value="${r.id}">${r.fields.Name||'(unnamed)'}</option>`).join('');
-      document.getElementById('setupStep1').style.display='none';
-      document.getElementById('setupStep2').style.display='block';
-    } catch(e) { /* fall through to show full setup */ }
-    document.getElementById('setupScreen').style.display='flex';
-    document.getElementById('loadingBanner').style.display='none';
-  })();
-} else {
+if(!AIRTABLE_BASE||!AIRTABLE_TOKEN){
   document.getElementById('setupScreen').style.display='flex';
   document.getElementById('loadingBanner').style.display='none';
+} else if(!currentEmpId){
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loadingBanner').style.display='none';
+  // Show first-time hint if desired
+  document.getElementById('firstTimeNote').style.display='block';
+} else {
+  init();
 }
 </script>
 </body>

@@ -127,7 +127,7 @@
     .legend-swatch.sick { background: #e07575; }
     .legend-swatch.today { border: 2px solid #f39c12; background: transparent; }
 
-    /* ── Tabs ── */
+    /* ── Tabs (desktop) ── */
     .tabs-bar {
       display: flex; border: 1px solid #d8dde4; border-bottom: none;
       border-radius: 6px 6px 0 0; overflow: hidden; background: #eef1f5;
@@ -146,12 +146,56 @@
     }
     .tab-btn.active .tab-count { background: #2d7ab5; }
 
-    /* ── Tab panels ── */
+    /* ── Tab panels (desktop) ── */
     .tab-panel {
       background: #fff; border: 1px solid #d8dde4; border-radius: 0 0 6px 6px;
       padding: 20px; margin-bottom: 20px;
     }
     .tab-panel.hidden { display: none; }
+
+    /* ── Accordion (mobile) ── */
+    .accordion { display: none; margin-bottom: 16px; }
+    .accordion-item { border: 1px solid #d8dde4; border-radius: 6px; margin-bottom: 8px; overflow: hidden; }
+    .accordion-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 16px; background: #eef1f5; cursor: pointer;
+      font-size: .88rem; font-weight: 600; color: #5a6a7a;
+      border: none; width: 100%; text-align: left;
+    }
+    .accordion-header.open { background: #fff; color: #2d7ab5; border-bottom: 1px solid #d8dde4; }
+    .accordion-header-left { display: flex; align-items: center; gap: 8px; }
+    .accordion-chevron { font-size: .7rem; transition: transform .2s; color: #8a9ab0; }
+    .accordion-header.open .accordion-chevron { transform: rotate(180deg); color: #2d7ab5; }
+    .accordion-body { background: #fff; padding: 16px; display: none; }
+    .accordion-body.open { display: block; }
+
+    @media(max-width: 640px) {
+      .tabs-bar, .tab-panel { display: none !important; }
+      .accordion { display: block; }
+      .absence-table { font-size: .78rem; }
+      .absence-table th, .absence-table td { padding: 8px 6px; }
+    }
+
+    /* ── User dropdown ── */
+    .user-menu { position: relative; }
+    .user-menu-btn {
+      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+      color: #fff; border-radius: 4px; padding: 5px 10px; cursor: pointer;
+      font-size: .82rem; font-weight: 600; display: flex; align-items: center; gap: 6px;
+    }
+    .user-menu-btn:hover { background: rgba(255,255,255,.25); }
+    .user-menu-btn .chevron { font-size: .65rem; }
+    .user-dropdown {
+      display: none; position: absolute; right: 0; top: calc(100% + 6px);
+      background: #fff; border: 1px solid #d8dde4; border-radius: 6px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.12); min-width: 140px; z-index: 200;
+    }
+    .user-dropdown.open { display: block; }
+    .user-dropdown a {
+      display: block; padding: 10px 16px; font-size: .85rem; color: #2c3e50;
+      text-decoration: none; cursor: pointer;
+    }
+    .user-dropdown a:hover { background: #f8fafc; color: #c0392b; }
 
     /* ── Log form ── */
     .form-type-toggle {
@@ -229,14 +273,22 @@
     }
     .absence-table tr:last-child td { border-bottom: none; }
     .absence-table tr:hover td { background: #f8fafc; }
-    .badge-type { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: .72rem; font-weight: 700; }
+    .badge-type { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 3px; font-size: .72rem; font-weight: 700; }
     .badge-type.vacation { background: #ddeef8; color: #2d7ab5; }
     .badge-type.sick { background: #fde8e8; color: #c0392b; }
-    .badge-status {
-      display: inline-block; padding: 2px 8px; border-radius: 3px;
-      font-size: .72rem; font-weight: 700; background: #e6f6ee; color: #27ae60;
-    }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .status-dot.approved { background: #27ae60; }
+    .status-dot.pending  { background: #b0bec5; }
     .empty-state { text-align: center; padding: 32px; color: #8a9ab0; font-size: .88rem; }
+
+    /* ── Detail view inside modal ── */
+    .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid #eef1f5; font-size: .88rem; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { font-size: .72rem; font-weight: 700; color: #8a9ab0; text-transform: uppercase; letter-spacing: .04em; }
+    .detail-value { color: #2c3e50; font-weight: 500; text-align: right; }
+    .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 10px; font-size: .75rem; font-weight: 700; }
+    .status-pill.approved { background: #e6f6ee; color: #27ae60; }
+    .status-pill.pending  { background: #f0f2f4; color: #78909c; }
 
     /* ── Loading ── */
     #loadingBanner { text-align: center; padding: 80px 20px; color: #8a9ab0; }
@@ -341,7 +393,15 @@
       <span class="header-sub">Team Time Off</span>
     </div>
   </div>
-  <div class="header-user" id="headerUser"></div>
+  <div class="user-menu" id="userMenu">
+    <button class="user-menu-btn" onclick="toggleUserMenu()" id="userMenuBtn">
+      <span id="headerUserName"></span>
+      <span class="chevron">&#9660;</span>
+    </button>
+    <div class="user-dropdown" id="userDropdown">
+      <a onclick="logout()">Sign out</a>
+    </div>
+  </div>
 </header>
 
 <!-- Loading -->
@@ -387,7 +447,7 @@
       </div>
     </div>
 
-    <!-- Tabs -->
+    <!-- Tabs (desktop) -->
     <div class="tabs-bar" id="tabsBar">
       <button class="tab-btn active" onclick="switchTab(this,'log')">Log Absence</button>
       <button class="tab-btn" onclick="switchTab(this,'upcoming')">
@@ -398,13 +458,12 @@
       </button>
     </div>
 
-    <!-- Log -->
+    <!-- Log (desktop panel) -->
     <div class="tab-panel" id="panel-log">
       <div class="form-type-toggle">
         <button class="type-btn active vacation" id="btnVacType" onclick="setLogType('Vacation')">Vacation</button>
         <button class="type-btn" id="btnSickType" onclick="setLogType('Sick Day')">Sick Day</button>
       </div>
-
       <div id="vacationFields">
         <div class="form-row">
           <div class="form-group">
@@ -418,7 +477,6 @@
         </div>
         <div class="days-note" id="daysNote"></div>
       </div>
-
       <div id="sickFields" style="display:none">
         <div class="form-row">
           <div class="form-group" style="max-width:220px">
@@ -431,35 +489,110 @@
           <input type="file" id="certFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="onFileSelected()" />
           <div class="file-note">PDF, JPG, PNG, or Word — you can also upload this later directly in Airtable.</div>
           <div id="fileChip" style="display:none">
-            <div class="file-chip">
-              <span id="fileName"></span>
-              <span class="file-remove" onclick="clearFile()">x</span>
-            </div>
+            <div class="file-chip"><span id="fileName"></span><span class="file-remove" onclick="clearFile()">x</span></div>
           </div>
         </div>
       </div>
-
       <div class="form-row">
         <div class="form-group">
           <label>Notes (optional)</label>
           <textarea id="absenceNote" placeholder="Any additional information..."></textarea>
         </div>
       </div>
-
       <div class="form-actions">
         <button class="btn btn-vacation" id="submitBtn" onclick="submitAbsence()">Submit Absence</button>
         <button class="btn btn-secondary" onclick="clearForm()">Clear</button>
       </div>
     </div>
 
-    <!-- Upcoming -->
+    <!-- Upcoming (desktop panel) -->
     <div class="tab-panel hidden" id="panel-upcoming">
       <div id="upcomingContent"></div>
     </div>
 
-    <!-- Past -->
+    <!-- Past (desktop panel) -->
     <div class="tab-panel hidden" id="panel-past">
       <div id="pastContent"></div>
+    </div>
+
+    <!-- Accordion (mobile only) -->
+    <div class="accordion" id="accordionWrap">
+
+      <!-- Log Absence -->
+      <div class="accordion-item">
+        <button class="accordion-header open" id="acc-btn-log" onclick="toggleAccordion('log')">
+          <span class="accordion-header-left">Log Absence</span>
+          <span class="accordion-chevron">&#9660;</span>
+        </button>
+        <div class="accordion-body open" id="acc-log">
+          <div class="form-type-toggle">
+            <button class="type-btn active vacation" id="btnVacTypeM" onclick="setLogType('Vacation')">Vacation</button>
+            <button class="type-btn" id="btnSickTypeM" onclick="setLogType('Sick Day')">Sick Day</button>
+          </div>
+          <div id="vacationFieldsM">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Start Date</label>
+                <input type="date" id="startDateM" onchange="updateWorkingDays()" />
+              </div>
+              <div class="form-group">
+                <label>End Date</label>
+                <input type="date" id="endDateM" onchange="updateWorkingDays()" />
+              </div>
+            </div>
+            <div class="days-note" id="daysNoteM"></div>
+          </div>
+          <div id="sickFieldsM" style="display:none">
+            <div class="form-row">
+              <div class="form-group" style="max-width:220px">
+                <label>Date</label>
+                <input type="date" id="sickDateM" />
+              </div>
+            </div>
+            <div class="file-upload-area">
+              <label class="file-upload-label" for="certFileM">Attach medical certificate</label>
+              <input type="file" id="certFileM" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="onFileSelected()" />
+              <div class="file-note">PDF, JPG, PNG, or Word</div>
+              <div id="fileChipM" style="display:none">
+                <div class="file-chip"><span id="fileNameM"></span><span class="file-remove" onclick="clearFile()">x</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Notes (optional)</label>
+              <textarea id="absenceNoteM" placeholder="Any additional information..."></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-vacation" id="submitBtnM" onclick="submitAbsence()">Submit Absence</button>
+            <button class="btn btn-secondary" onclick="clearForm()">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming Absences -->
+      <div class="accordion-item">
+        <button class="accordion-header" id="acc-btn-upcoming" onclick="toggleAccordion('upcoming')">
+          <span class="accordion-header-left">Upcoming Absences <span class="tab-count" id="countUpcomingM">0</span></span>
+          <span class="accordion-chevron">&#9660;</span>
+        </button>
+        <div class="accordion-body" id="acc-upcoming">
+          <div id="upcomingContentM"></div>
+        </div>
+      </div>
+
+      <!-- Past Absences -->
+      <div class="accordion-item">
+        <button class="accordion-header" id="acc-btn-past" onclick="toggleAccordion('past')">
+          <span class="accordion-header-left">Past Absences <span class="tab-count" id="countPastM">0</span></span>
+          <span class="accordion-chevron">&#9660;</span>
+        </button>
+        <div class="accordion-body" id="acc-past">
+          <div id="pastContentM"></div>
+        </div>
+      </div>
+
     </div>
 
   </div>
@@ -468,59 +601,68 @@
 <!-- Toast -->
 <div class="toast-wrap" id="toastWrap"></div>
 
-<!-- Edit Absence Modal -->
+<!-- Absence Detail / Edit Modal -->
 <div class="modal-backdrop" id="editModal" onclick="closeEditModal(event)">
   <div class="modal-card" onclick="event.stopPropagation()">
     <div class="modal-header">
-      <div class="modal-title" id="editModalTitle">Edit Absence</div>
+      <div class="modal-title" id="editModalTitle">Absence Details</div>
       <button class="modal-close" onclick="closeEditModal()">&times;</button>
     </div>
 
-    <div id="editVacFields">
-      <div class="form-row">
-        <div class="form-group">
-          <label>Start Date</label>
-          <input type="date" id="editStartDate" onchange="updateEditDays()" />
-        </div>
-        <div class="form-group">
-          <label>End Date</label>
-          <input type="date" id="editEndDate" onchange="updateEditDays()" />
-        </div>
+    <!-- Detail view (default) -->
+    <div id="editDetailView">
+      <div id="editDetailRows"></div>
+      <div class="modal-actions" id="editDetailActions">
+        <button class="btn btn-vacation" onclick="switchToEditForm()">Modify</button>
+        <button class="btn btn-danger" onclick="deleteAbsence()">Delete</button>
+        <button class="btn btn-secondary" onclick="closeEditModal()">Close</button>
       </div>
-      <div class="days-note" id="editDaysNote"></div>
     </div>
 
-    <div id="editSickFields">
-      <div class="form-row">
-        <div class="form-group" style="max-width:220px">
-          <label>Date</label>
-          <input type="date" id="editSickDate" />
+    <!-- Edit form (shown after clicking Modify) -->
+    <div id="editFormView" style="display:none">
+      <div id="editVacFields">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Start Date</label>
+            <input type="date" id="editStartDate" onchange="updateEditDays()" />
+          </div>
+          <div class="form-group">
+            <label>End Date</label>
+            <input type="date" id="editEndDate" onchange="updateEditDays()" />
+          </div>
         </div>
+        <div class="days-note" id="editDaysNote"></div>
       </div>
-      <div class="file-upload-area">
-        <label class="file-upload-label" for="editCertFile">Attach / replace medical certificate</label>
-        <input type="file" id="editCertFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="onEditFileSelected()" />
-        <div class="file-note">PDF, JPG, PNG, or Word</div>
-        <div id="editFileChip" style="display:none">
-          <div class="file-chip">
-            <span id="editFileName"></span>
-            <span class="file-remove" onclick="clearEditFile()">x</span>
+      <div id="editSickFields">
+        <div class="form-row">
+          <div class="form-group" style="max-width:220px">
+            <label>Date</label>
+            <input type="date" id="editSickDate" />
+          </div>
+        </div>
+        <div class="file-upload-area">
+          <label class="file-upload-label" for="editCertFile">Attach / replace medical certificate</label>
+          <input type="file" id="editCertFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="onEditFileSelected()" />
+          <div class="file-note">PDF, JPG, PNG, or Word</div>
+          <div id="editFileChip" style="display:none">
+            <div class="file-chip">
+              <span id="editFileName"></span>
+              <span class="file-remove" onclick="clearEditFile()">x</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label>Notes</label>
-        <textarea id="editNote" placeholder="Any additional information..."></textarea>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="editNote" placeholder="Any additional information..."></textarea>
+        </div>
       </div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn btn-vacation" id="editSaveBtn" onclick="saveEditAbsence()">Save Changes</button>
-      <button class="btn btn-danger" onclick="deleteAbsence()">Delete</button>
-      <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+      <div class="modal-actions">
+        <button class="btn btn-vacation" id="editSaveBtn" onclick="saveEditAbsence()">Save Changes</button>
+        <button class="btn btn-secondary" onclick="switchToDetailView()">Back</button>
+      </div>
     </div>
   </div>
 </div>
@@ -941,8 +1083,7 @@ function finishSetup() {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
-  document.getElementById('headerUser').innerHTML =
-    `${currentEmpName} <a href="#" onclick="logout();return false;">Sign out</a>`;
+  document.getElementById('headerUserName').textContent = currentEmpName;
   try {
     await detectFields();
     await loadAbsences();
@@ -952,6 +1093,9 @@ async function init() {
     document.getElementById('startDate').value = todayStr;
     document.getElementById('endDate').value   = todayStr;
     document.getElementById('sickDate').value  = todayStr;
+    document.getElementById('startDateM').value = todayStr;
+    document.getElementById('endDateM').value   = todayStr;
+    document.getElementById('sickDateM').value  = todayStr;
     updateWorkingDays();
     document.getElementById('loadingBanner').style.display='none';
     document.getElementById('appMain').style.display='block';
@@ -1085,14 +1229,19 @@ function handleCalDayClick(ds) {
     document.getElementById('calHint').style.display='none';
     // Multi-day = Vacation; single day stays as current type
     if(s!==e) setLogType('Vacation');
-    document.getElementById('startDate').value=s;
-    document.getElementById('endDate').value=e;
-    document.getElementById('sickDate').value=s;
+    document.getElementById('startDate').value=s;  document.getElementById('startDateM').value=s;
+    document.getElementById('endDate').value=e;    document.getElementById('endDateM').value=e;
+    document.getElementById('sickDate').value=s;   document.getElementById('sickDateM').value=s;
     updateWorkingDays();
-    // Switch to Log tab and scroll to form
-    const logTabBtn=document.querySelector('.tab-btn');
-    switchTab(logTabBtn,'log');
-    setTimeout(()=>document.getElementById('panel-log').scrollIntoView({behavior:'smooth'}),100);
+    // Switch to Log tab / open accordion
+    if(window.innerWidth<=640){
+      toggleAccordion('log');
+      setTimeout(()=>document.getElementById('acc-log').scrollIntoView({behavior:'smooth'}),100);
+    } else {
+      const logTabBtn=document.querySelector('.tab-btn');
+      switchTab(logTabBtn,'log');
+      setTimeout(()=>document.getElementById('panel-log').scrollIntoView({behavior:'smooth'}),100);
+    }
     renderCalendar();
   }
 }
@@ -1129,56 +1278,80 @@ function switchTab(el, name){
 function setLogType(type){
   logType=type;
   const isVac=type==='Vacation';
+  // Desktop
   document.getElementById('btnVacType').className='type-btn'+(isVac?' active vacation':'');
   document.getElementById('btnSickType').className='type-btn'+(!isVac?' active sick':'');
   document.getElementById('vacationFields').style.display=isVac?'':'none';
   document.getElementById('sickFields').style.display=isVac?'none':'';
   document.getElementById('submitBtn').className=isVac?'btn btn-vacation':'btn btn-sick';
+  // Mobile
+  document.getElementById('btnVacTypeM').className='type-btn'+(isVac?' active vacation':'');
+  document.getElementById('btnSickTypeM').className='type-btn'+(!isVac?' active sick':'');
+  document.getElementById('vacationFieldsM').style.display=isVac?'':'none';
+  document.getElementById('sickFieldsM').style.display=isVac?'none':'';
+  document.getElementById('submitBtnM').className=isVac?'btn btn-vacation':'btn btn-sick';
 }
 
 function updateWorkingDays(){
-  const s=document.getElementById('startDate').value;
-  const e=document.getElementById('endDate').value;
-  const el=document.getElementById('daysNote');
-  if(s&&e&&e>=s){
-    const days=workingDays(s,e);
-    const left=VACATION_ALLOT-countUsed('Vacation');
-    el.textContent=`${days} working day${days!==1?'s':''} · ${left} vacation days remaining`;
-    el.className='days-note'+(days>left?' warn':'');
-  } else { el.textContent=''; }
+  // Use whichever input is active (desktop or mobile)
+  const isMobile = window.innerWidth <= 640;
+  const s = isMobile
+    ? document.getElementById('startDateM').value
+    : document.getElementById('startDate').value;
+  const e = isMobile
+    ? document.getElementById('endDateM').value
+    : document.getElementById('endDate').value;
+  // Sync both so submit always has current values
+  if(s){ document.getElementById('startDate').value=s; document.getElementById('startDateM').value=s; }
+  if(e){ document.getElementById('endDate').value=e;   document.getElementById('endDateM').value=e; }
+  const note = `${s&&e&&e>=s ? workingDays(s,e)+' working day'+(workingDays(s,e)!==1?'s':'') : ''} ${s&&e&&e>=s ? '· '+(VACATION_ALLOT-countUsed('Vacation'))+' vacation days remaining' : ''}`.trim();
+  const warn = s&&e&&e>=s && workingDays(s,e)>(VACATION_ALLOT-countUsed('Vacation'));
+  document.getElementById('daysNote').textContent  = note;
+  document.getElementById('daysNote').className    = 'days-note'+(warn?' warn':'');
+  document.getElementById('daysNoteM').textContent = note;
+  document.getElementById('daysNoteM').className   = 'days-note'+(warn?' warn':'');
 }
 
 function onFileSelected(){
-  const f=document.getElementById('certFile').files[0];
-  selectedFile=f||null;
-  if(f){ document.getElementById('fileName').textContent=f.name; document.getElementById('fileChip').style.display='block'; }
+  const src = window.innerWidth<=640 ? 'certFileM' : 'certFile';
+  const f = document.getElementById(src).files[0];
+  selectedFile = f || null;
+  if(f){
+    document.getElementById('fileName').textContent=f.name;  document.getElementById('fileChip').style.display='block';
+    document.getElementById('fileNameM').textContent=f.name; document.getElementById('fileChipM').style.display='block';
+  }
 }
 function clearFile(){
-  selectedFile=null; document.getElementById('certFile').value='';
-  document.getElementById('fileChip').style.display='none';
+  selectedFile=null;
+  document.getElementById('certFile').value='';  document.getElementById('fileChip').style.display='none';
+  document.getElementById('certFileM').value=''; document.getElementById('fileChipM').style.display='none';
 }
 function clearForm(){
-  document.getElementById('startDate').value=todayStr;
-  document.getElementById('endDate').value=todayStr;
-  document.getElementById('sickDate').value=todayStr;
+  ['startDate','endDate','sickDate','startDateM','endDateM','sickDateM'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value=todayStr;
+  });
   document.getElementById('absenceNote').value='';
+  document.getElementById('absenceNoteM').value='';
   calCommitted.start=null; calCommitted.end=null;
   clearFile(); updateWorkingDays(); renderCalendar();
 }
 
 async function submitAbsence(){
-  const btn=document.getElementById('submitBtn');
-  btn.disabled=true; btn.textContent='Submitting...';
+  const isMobile = window.innerWidth <= 640;
+  const btn = isMobile ? document.getElementById('submitBtnM') : document.getElementById('submitBtn');
+  // Disable both buttons
+  document.getElementById('submitBtn').disabled=true;  document.getElementById('submitBtn').textContent='Submitting...';
+  document.getElementById('submitBtnM').disabled=true; document.getElementById('submitBtnM').textContent='Submitting...';
   try {
     let startStr, endStr, wdays;
     if(logType==='Vacation'){
-      startStr=document.getElementById('startDate').value;
-      endStr=document.getElementById('endDate').value;
+      startStr = isMobile ? document.getElementById('startDateM').value : document.getElementById('startDate').value;
+      endStr   = isMobile ? document.getElementById('endDateM').value   : document.getElementById('endDate').value;
       if(!startStr||!endStr||endStr<startStr) throw new Error('Please select valid start and end dates.');
       wdays=workingDays(startStr,endStr);
       if(wdays<1) throw new Error('No working days in the selected range.');
     } else {
-      startStr=endStr=document.getElementById('sickDate').value;
+      startStr=endStr = isMobile ? document.getElementById('sickDateM').value : document.getElementById('sickDate').value;
       if(!startStr) throw new Error('Please select a date.');
       wdays=1;
     }
@@ -1190,7 +1363,7 @@ async function submitAbsence(){
       [F.endDate]:   endStr,
       [F.status]:    'Approved',
     };
-    const note=document.getElementById('absenceNote').value.trim();
+    const note=(isMobile ? document.getElementById('absenceNoteM') : document.getElementById('absenceNote')).value.trim();
     if(note) fields[F.notes]=note;
 
     const result=await atCreate(TABLE_ABSENCE, fields);
@@ -1207,30 +1380,39 @@ async function submitAbsence(){
     updateAllotment(); renderCalendar(); renderLists(); clearForm();
     toast(uploadWarning?'Absence logged. Certificate upload failed — add it in Airtable.':'Absence submitted successfully.', uploadWarning?'':' success');
   } catch(e){ toast(e.message,'error'); }
-  btn.disabled=false; btn.textContent='Submit Absence';
+  document.getElementById('submitBtn').disabled=false;  document.getElementById('submitBtn').textContent='Submit Absence';
+  document.getElementById('submitBtnM').disabled=false; document.getElementById('submitBtnM').textContent='Submit Absence';
 }
 
 // ── Lists ─────────────────────────────────────────────────────────────────────
 function renderLists(){
   const upcoming=absences.filter(a=>a.end>=todayStr).sort((a,b)=>a.start.localeCompare(b.start));
   const past    =absences.filter(a=>a.end <todayStr).sort((a,b)=>b.start.localeCompare(a.start));
-  document.getElementById('countUpcoming').textContent=upcoming.length;
-  document.getElementById('countPast').textContent    =past.length;
-  document.getElementById('upcomingContent').innerHTML=buildTable(upcoming, true);
-  document.getElementById('pastContent').innerHTML    =buildTable(past, false);
+  document.getElementById('countUpcoming').textContent  = upcoming.length;
+  document.getElementById('countPast').textContent      = past.length;
+  document.getElementById('countUpcomingM').textContent = upcoming.length;
+  document.getElementById('countPastM').textContent     = past.length;
+  document.getElementById('upcomingContent').innerHTML  = buildTable(upcoming);
+  document.getElementById('pastContent').innerHTML      = buildTable(past);
+  document.getElementById('upcomingContentM').innerHTML = buildTable(upcoming);
+  document.getElementById('pastContentM').innerHTML     = buildTable(past);
 }
 
-function buildTable(rows, editable=false){
+function buildTable(rows){
   if(!rows.length) return '<div class="empty-state">No absences to display.</div>';
-  const hint = editable ? '<p style="font-size:.75rem;color:#8a9ab0;margin-bottom:10px;">Click a row to edit or delete it.</p>' : '';
-  return hint + `<table class="absence-table">
-    <thead><tr><th>Type</th><th>Start Date</th><th>End Date</th><th>Duration</th><th>Status</th></tr></thead>
-    <tbody>${rows.map(a=>`<tr ${editable?`class="clickable-row" onclick="openEditModal('${a.id}')"`:''}>
-      <td><span class="badge-type ${a.type==='Vacation'?'vacation':'sick'}">${a.type}</span></td>
-      <td>${displayDate(a.start)}</td><td>${displayDate(a.end)}</td>
-      <td>${a.workingDays} day${a.workingDays!==1?'s':''}</td>
-      <td><span class="badge-status">${a.status}</span></td>
-    </tr>`).join('')}</tbody></table>`;
+  return `<p style="font-size:.75rem;color:#8a9ab0;margin-bottom:10px;">Tap a row to view details.</p>
+  <table class="absence-table">
+    <thead><tr><th>Type</th><th>Start</th><th>End</th><th>Days</th></tr></thead>
+    <tbody>${rows.map(a=>{
+      const dotClass = (a.status||'').toLowerCase()==='approved' ? 'approved' : 'pending';
+      const typeClass = a.type==='Vacation' ? 'vacation' : 'sick';
+      return `<tr class="clickable-row" onclick="openEditModal('${a.id}')">
+        <td><span class="badge-type ${typeClass}"><span class="status-dot ${dotClass}"></span>${a.type}</span></td>
+        <td>${displayDate(a.start)}</td>
+        <td>${displayDate(a.end)}</td>
+        <td>${a.workingDays} day${a.workingDays!==1?'s':''}</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
@@ -1240,6 +1422,34 @@ function toast(msg, type=''){
   document.getElementById('toastWrap').appendChild(el);
   setTimeout(()=>el.remove(), 4500);
 }
+
+// ── Accordion (mobile) ───────────────────────────────────────────────────────
+function toggleAccordion(name) {
+  ['log','upcoming','past'].forEach(n => {
+    const btn  = document.getElementById(`acc-btn-${n}`);
+    const body = document.getElementById(`acc-${n}`);
+    if(n === name) {
+      const isOpen = btn.classList.contains('open');
+      btn.classList.toggle('open', !isOpen);
+      body.classList.toggle('open', !isOpen);
+    } else {
+      btn.classList.remove('open');
+      body.classList.remove('open');
+    }
+  });
+}
+
+// ── User menu dropdown ────────────────────────────────────────────────────────
+function toggleUserMenu() {
+  document.getElementById('userDropdown').classList.toggle('open');
+}
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  const menu = document.getElementById('userMenu');
+  if(menu && !menu.contains(e.target)){
+    document.getElementById('userDropdown').classList.remove('open');
+  }
+});
 
 // ── Edit Absence Modal ────────────────────────────────────────────────────────
 let _editId = null;
@@ -1251,12 +1461,43 @@ function openEditModal(id) {
   _editId = id;
   _editFile = null;
 
+  const statusClass = (a.status||'').toLowerCase()==='approved' ? 'approved' : 'pending';
+  const statusLabel = a.status || 'Pending';
+  const isPast = a.end < todayStr;
+
+  // Build detail rows
+  document.getElementById('editDetailRows').innerHTML = `
+    <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value">${a.type}</span></div>
+    <div class="detail-row"><span class="detail-label">Start Date</span><span class="detail-value">${displayDate(a.start)}</span></div>
+    <div class="detail-row"><span class="detail-label">End Date</span><span class="detail-value">${displayDate(a.end)}</span></div>
+    <div class="detail-row"><span class="detail-label">Duration</span><span class="detail-value">${a.workingDays} working day${a.workingDays!==1?'s':''}</span></div>
+    <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="status-pill ${statusClass}">${statusLabel}</span></span></div>
+    ${a.notes ? `<div class="detail-row"><span class="detail-label">Notes</span><span class="detail-value" style="max-width:60%;word-break:break-word">${a.notes}</span></div>` : ''}
+  `;
+
+  // Hide Modify button for past absences (can still delete)
+  document.getElementById('editDetailActions').innerHTML = `
+    ${!isPast ? `<button class="btn btn-vacation" onclick="switchToEditForm()">Modify</button>` : ''}
+    <button class="btn btn-danger" onclick="deleteAbsence()">Delete</button>
+    <button class="btn btn-secondary" onclick="closeEditModal()">Close</button>
+  `;
+
+  document.getElementById('editModalTitle').textContent = `${a.type} Details`;
+  document.getElementById('editDetailView').style.display = '';
+  document.getElementById('editFormView').style.display = 'none';
+  document.getElementById('editModal').classList.add('open');
+}
+
+function switchToEditForm() {
+  const a = absences.find(x=>x.id===_editId);
+  if (!a) return;
   const isVac = a.type === 'Vacation';
-  document.getElementById('editModalTitle').textContent = `Edit ${a.type}`;
+  document.getElementById('editDetailView').style.display = 'none';
+  document.getElementById('editFormView').style.display = '';
+  document.getElementById('editModalTitle').textContent = `Modify ${a.type}`;
   document.getElementById('editVacFields').style.display = isVac ? '' : 'none';
   document.getElementById('editSickFields').style.display = isVac ? 'none' : '';
   document.getElementById('editSaveBtn').className = isVac ? 'btn btn-vacation' : 'btn btn-sick';
-
   if (isVac) {
     document.getElementById('editStartDate').value = a.start;
     document.getElementById('editEndDate').value   = a.end;
@@ -1267,8 +1508,13 @@ function openEditModal(id) {
   document.getElementById('editNote').value = a.notes || '';
   document.getElementById('editFileChip').style.display = 'none';
   document.getElementById('editCertFile').value = '';
+}
 
-  document.getElementById('editModal').classList.add('open');
+function switchToDetailView() {
+  document.getElementById('editDetailView').style.display = '';
+  document.getElementById('editFormView').style.display = 'none';
+  const a = absences.find(x=>x.id===_editId);
+  if (a) document.getElementById('editModalTitle').textContent = `${a.type} Details`;
 }
 
 function closeEditModal(e) {

@@ -1475,10 +1475,9 @@ function openEditModal(id) {
     ${a.notes ? `<div class="detail-row"><span class="detail-label">Notes</span><span class="detail-value" style="max-width:60%;word-break:break-word">${a.notes}</span></div>` : ''}
   `;
 
-  // Hide Modify button for past absences (can still delete)
   document.getElementById('editDetailActions').innerHTML = `
     ${!isPast ? `<button class="btn btn-vacation" onclick="switchToEditForm()">Modify</button>` : ''}
-    <button class="btn btn-danger" onclick="deleteAbsence()">Delete</button>
+    ${!isPast ? `<button class="btn btn-danger" onclick="deleteAbsence()">Delete</button>` : ''}
     <button class="btn btn-secondary" onclick="closeEditModal()">Close</button>
   `;
 

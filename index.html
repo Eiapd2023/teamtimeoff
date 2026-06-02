@@ -559,29 +559,60 @@
       <div class="overlay-sub" id="loginSub">Enter your username to continue</div>
     </div>
 
-    <!-- Step 1: username -->
+    <!-- Step 1: enter username -->
     <div id="loginStep1">
-      <label class="ol-label">Username</label>
+      <label class="ol-label" id="loginUsernameLabel">Username</label>
       <input class="ol-input" type="text" id="loginUsername" placeholder="e.g. smithj"
              autocomplete="username" autocapitalize="none"
              onkeydown="if(event.key==='Enter')loginNext()" />
       <button class="ol-btn" id="loginNextBtn" onclick="loginNext()">Continue</button>
     </div>
 
-    <!-- Step 2: password (shown after username check) -->
+    <!-- Step 2a: returning user — just password -->
     <div id="loginStep2" style="display:none">
-      <label class="ol-label" id="loginPassLabel">Password</label>
+      <label class="ol-label">Password</label>
       <input class="ol-input" type="password" id="loginPassword" placeholder="Password"
              autocomplete="current-password"
-             onkeydown="if(event.key==='Enter' && !document.getElementById('loginConfirmWrap').style.display.includes('none'))loginConfirmPassword(); else if(event.key==='Enter')login()" />
-      <div id="loginConfirmWrap" style="display:none">
-        <label class="ol-label">Confirm Password</label>
-        <input class="ol-input" type="password" id="loginPasswordConfirm" placeholder="Re-enter password"
-               onkeydown="if(event.key==='Enter')loginConfirmPassword()" />
-      </div>
-      <button class="ol-btn" id="loginBtn" onclick="loginStep2Submit()">Sign In</button>
+             onkeydown="if(event.key==='Enter')login()" />
+      <button class="ol-btn" id="loginBtn" onclick="login()">Sign In</button>
       <button class="ol-btn" style="background:#eef1f5;color:#5a6a7a;margin-top:6px;border:1px solid #d8dde4"
               onclick="resetLoginStep()">Back</button>
+      <span class="ol-link" onclick="showForgotPassword()" style="margin-top:14px">Forgot password?</span>
+    </div>
+
+    <!-- Step 2b: first time — choose own username + create password -->
+    <div id="loginStepFirst" style="display:none">
+      <p class="ol-note" style="margin-bottom:14px;">
+        Welcome! Since this is your first time, please choose your own username and create a password.
+        Keep them somewhere safe — your password cannot be recovered.
+      </p>
+      <label class="ol-label">Choose a Username</label>
+      <input class="ol-input" type="text" id="newUsername" placeholder="Your chosen username"
+             autocomplete="username" autocapitalize="none" />
+      <label class="ol-label">Create a Password</label>
+      <input class="ol-input" type="password" id="newPassword" placeholder="At least 6 characters"
+             autocomplete="new-password" />
+      <label class="ol-label">Confirm Password</label>
+      <input class="ol-input" type="password" id="newPasswordConfirm" placeholder="Re-enter password"
+             autocomplete="new-password"
+             onkeydown="if(event.key==='Enter')firstTimeSubmit()" />
+      <button class="ol-btn" id="firstTimeBtn" onclick="firstTimeSubmit()">Create Account</button>
+      <button class="ol-btn" style="background:#eef1f5;color:#5a6a7a;margin-top:6px;border:1px solid #d8dde4"
+              onclick="resetLoginStep()">Back</button>
+    </div>
+
+    <!-- Forgot password info -->
+    <div id="loginStepForgot" style="display:none">
+      <div style="background:#fff8e6;border:1px solid #f0d080;border-radius:6px;padding:14px;font-size:.82rem;color:#5a4a00;margin-bottom:14px;line-height:1.6;">
+        <strong>To reset your password:</strong><br>
+        Contact your administrator. They can open your record in Airtable and clear the Password field.
+        Once cleared, come back here and sign in with your username to set a new password.<br><br>
+        <strong>Forgot your username too?</strong><br>
+        Your administrator can also reset your Username field back to your original assigned username
+        (your last name + first initial), then you can start fresh.
+      </div>
+      <button class="ol-btn" style="background:#eef1f5;color:#5a6a7a;border:1px solid #d8dde4"
+              onclick="hideForgotPassword()">Back to Sign In</button>
     </div>
 
     <div class="ol-error" id="loginError"></div>
@@ -730,12 +761,43 @@ async function detectFields() {
 // ── Authentication ────────────────────────────────────────────────────────────
 let _loginMember = null; // cached after step 1
 
+function _hideAllLoginSteps() {
+  ['loginStep1','loginStep2','loginStepFirst','loginStepForgot'].forEach(id=>{
+    document.getElementById(id).style.display='none';
+  });
+  document.getElementById('loginError').style.display='none';
+}
+
+function resetLoginStep() {
+  _loginMember = null;
+  _hideAllLoginSteps();
+  document.getElementById('loginStep1').style.display='block';
+  document.getElementById('loginSub').textContent='Enter your username to continue';
+  document.getElementById('loginUsername').value='';
+  document.getElementById('loginNextBtn').textContent='Continue';
+  document.getElementById('loginNextBtn').disabled=false;
+  document.getElementById('loginUsername').focus();
+}
+
+function showForgotPassword() {
+  _hideAllLoginSteps();
+  document.getElementById('loginStepForgot').style.display='block';
+  document.getElementById('loginSub').textContent='Forgot password?';
+}
+
+function hideForgotPassword() {
+  _hideAllLoginSteps();
+  document.getElementById('loginStep2').style.display='block';
+  document.getElementById('loginSub').textContent='Enter your password';
+}
+
+// Step 1: look up by username (admin-assigned OR previously chosen custom username)
 async function loginNext() {
   const username = document.getElementById('loginUsername').value.trim().toLowerCase();
   if (!username) { showLoginErr('Please enter your username.'); return; }
   const btn = document.getElementById('loginNextBtn');
-  btn.textContent = 'Checking...'; btn.disabled = true;
-  document.getElementById('loginError').style.display = 'none';
+  btn.textContent='Checking...'; btn.disabled=true;
+  document.getElementById('loginError').style.display='none';
   try {
     await detectFields();
     const formula = encodeURIComponent(`LOWER({${F.username}})="${username}"`);
@@ -745,81 +807,70 @@ async function loginNext() {
       btn.textContent='Continue'; btn.disabled=false; return;
     }
     _loginMember = data.records[0];
-    const hasPassword = !!(_loginMember.fields[F.password]);
+    _hideAllLoginSteps();
 
-    // Show step 2
-    document.getElementById('loginStep1').style.display = 'none';
-    document.getElementById('loginStep2').style.display = 'block';
-
-    if (hasPassword) {
-      document.getElementById('loginSub').textContent = 'Enter your password';
-      document.getElementById('loginPassLabel').textContent = 'Password';
-      document.getElementById('loginConfirmWrap').style.display = 'none';
-      document.getElementById('loginBtn').textContent = 'Sign In';
+    if (!_loginMember.fields[F.password]) {
+      // First time — ask them to choose their own username + password
+      document.getElementById('loginSub').textContent='Set up your account';
+      document.getElementById('loginStepFirst').style.display='block';
+      document.getElementById('newUsername').value='';
+      document.getElementById('newPassword').value='';
+      document.getElementById('newPasswordConfirm').value='';
+      document.getElementById('newUsername').focus();
     } else {
-      document.getElementById('loginSub').textContent = 'Create a password for your account';
-      document.getElementById('loginPassLabel').textContent = 'New Password';
-      document.getElementById('loginConfirmWrap').style.display = 'block';
-      document.getElementById('loginBtn').textContent = 'Set Password & Sign In';
+      // Returning user — just ask for password
+      document.getElementById('loginSub').textContent='Enter your password';
+      document.getElementById('loginStep2').style.display='block';
+      document.getElementById('loginPassword').value='';
+      document.getElementById('loginPassword').focus();
     }
-    document.getElementById('loginPassword').focus();
   } catch(e) {
     showLoginErr(e.message);
     btn.textContent='Continue'; btn.disabled=false;
   }
 }
 
-function resetLoginStep() {
-  _loginMember = null;
-  document.getElementById('loginStep1').style.display = 'block';
-  document.getElementById('loginStep2').style.display = 'none';
-  document.getElementById('loginPassword').value = '';
-  document.getElementById('loginPasswordConfirm').value = '';
-  document.getElementById('loginSub').textContent = 'Enter your username to continue';
-  document.getElementById('loginError').style.display = 'none';
-  document.getElementById('loginNextBtn').textContent = 'Continue';
-  document.getElementById('loginNextBtn').disabled = false;
-  document.getElementById('loginUsername').focus();
-}
-
-async function loginStep2Submit() {
-  const hasPassword = !!(_loginMember && _loginMember.fields[F.password]);
-  if (hasPassword) {
-    await login();
-  } else {
-    await loginConfirmPassword();
-  }
-}
-
-async function loginConfirmPassword() {
-  const p1 = document.getElementById('loginPassword').value;
-  const p2 = document.getElementById('loginPasswordConfirm').value;
-  if (!p1) { showLoginErr('Please enter a password.'); return; }
-  if (p1 !== p2) { showLoginErr('Passwords do not match.'); return; }
+// First-time account creation: choose custom username + password
+async function firstTimeSubmit() {
+  const newUser = document.getElementById('newUsername').value.trim().toLowerCase();
+  const p1 = document.getElementById('newPassword').value;
+  const p2 = document.getElementById('newPasswordConfirm').value;
+  if (!newUser)      { showLoginErr('Please choose a username.'); return; }
+  if (newUser.length < 3) { showLoginErr('Username must be at least 3 characters.'); return; }
+  if (!p1)           { showLoginErr('Please create a password.'); return; }
   if (p1.length < 6) { showLoginErr('Password must be at least 6 characters.'); return; }
-  const btn = document.getElementById('loginBtn');
-  btn.textContent = 'Saving...'; btn.disabled = true;
+  if (p1 !== p2)     { showLoginErr('Passwords do not match.'); return; }
+  const btn = document.getElementById('firstTimeBtn');
+  btn.textContent='Creating account...'; btn.disabled=true;
   try {
+    // Check the chosen username isn't already taken by another record
+    const check = encodeURIComponent(`AND(LOWER({${F.username}})="${newUser}",RECORD_ID()!="${_loginMember.id}")`);
+    const existing = await atFetch(TABLE_MEMBERS, `?filterByFormula=${check}&maxRecords=1`);
+    if (existing.records.length) {
+      showLoginErr('That username is already taken. Please choose another.');
+      btn.textContent='Create Account'; btn.disabled=false; return;
+    }
     const hash = await sha256(p1);
-    await atPatch(TABLE_MEMBERS, _loginMember.id, { [F.password]: hash });
+    await atPatch(TABLE_MEMBERS, _loginMember.id, { [F.username]: newUser, [F.password]: hash });
+    _loginMember.fields[F.username] = newUser;
     _loginMember.fields[F.password] = hash;
     await finishLogin();
   } catch(e) {
     showLoginErr(e.message);
-    btn.textContent='Set Password & Sign In'; btn.disabled=false;
+    btn.textContent='Create Account'; btn.disabled=false;
   }
 }
 
+// Returning user sign-in
 async function login() {
   const password = document.getElementById('loginPassword').value;
   const btn = document.getElementById('loginBtn');
   if (!password) { showLoginErr('Please enter your password.'); return; }
-  btn.textContent = 'Signing in...'; btn.disabled = true;
-  document.getElementById('loginError').style.display = 'none';
+  btn.textContent='Signing in...'; btn.disabled=true;
+  document.getElementById('loginError').style.display='none';
   try {
-    const storedHash = _loginMember.fields[F.password];
-    const inputHash  = await sha256(password);
-    if (storedHash !== inputHash) {
+    const inputHash = await sha256(password);
+    if (_loginMember.fields[F.password] !== inputHash) {
       showLoginErr('Incorrect password.');
       btn.textContent='Sign In'; btn.disabled=false; return;
     }
@@ -835,7 +886,7 @@ async function finishLogin() {
   localStorage.setItem('at_emp_name', _loginMember.fields['Name'] || _loginMember.fields[F.username]);
   currentEmpId   = _loginMember.id;
   currentEmpName = _loginMember.fields['Name'] || _loginMember.fields[F.username];
-  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display='none';
   init();
 }
 
@@ -982,17 +1033,10 @@ function buildMonthCal(y, m) {
           else                    cell.classList.add('range-mid');
         } else { cell.classList.add('sick'); }
       }
-      // Calendar selection state
-      if(calSel.active && calSel.start){
-        if(ds===calSel.start) cell.classList.add('sel-start');
-        else if(calSel.hover){
-          const lo=calSel.start<calSel.hover?calSel.start:calSel.hover;
-          const hi=calSel.start<calSel.hover?calSel.hover:calSel.start;
-          if(ds>lo && ds<hi) cell.classList.add('sel-range');
-          if(ds===lo||ds===hi) cell.classList.add('sel-start');
-        }
-      }
+      // Calendar selection state (initial render only — hover updates in-place)
+      if(calSel.active && calSel.start && ds===calSel.start) cell.classList.add('sel-start');
       // All non-weekend days are clickable
+      cell.dataset.ds = ds;
       cell.classList.add('clickable');
       cell.addEventListener('click', ()=>handleCalDayClick(ds));
       cell.addEventListener('mouseenter', ()=>handleCalHover(ds));
@@ -1038,9 +1082,17 @@ function handleCalDayClick(ds) {
 }
 
 function handleCalHover(ds){
-  if(!calSel.active) return;
-  calSel.hover=ds;
-  renderCalendar();
+  if(!calSel.active || !calSel.start) return;
+  calSel.hover = ds;
+  // Update classes in-place — no DOM rebuild, so clicks still fire correctly
+  document.querySelectorAll('.cal-day[data-ds]').forEach(cell=>{
+    const d = cell.dataset.ds;
+    cell.classList.remove('sel-start','sel-range');
+    const lo = calSel.start<ds ? calSel.start : ds;
+    const hi = calSel.start<ds ? ds : calSel.start;
+    if(d===calSel.start || d===ds) cell.classList.add('sel-start');
+    else if(d>lo && d<hi) cell.classList.add('sel-range');
+  });
 }
 
 function cancelCalSel(){

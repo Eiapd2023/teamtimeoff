@@ -641,6 +641,7 @@ let calOffset    = 0;
 let logType      = 'Vacation';
 let selectedFile = null;
 let calSel       = { active: false, start: null, hover: null }; // calendar date selection
+let calCommitted = { start: null, end: null }; // persists after selection until form clear/submit
 
 // Auto-detected field names
 let F = {
@@ -962,16 +963,24 @@ async function init() {
 }
 
 async function loadAbsences() {
-  const formula = encodeURIComponent(`FIND("${currentEmpId}",ARRAYJOIN({Person}))`);
-  const recs = await loadAllPages(TABLE_ABSENCE, `?filterByFormula=${formula}`);
-  absences = recs.map(r=>({
-    id:          r.id,
-    type:        r.fields[F.type]        || '',
-    start:       r.fields[F.startDate]   || '',
-    end:         r.fields[F.endDate]     || '',
-    workingDays: r.fields[F.workingDays] || 0,
-    status:      r.fields[F.status]      || 'Approved',
-  }));
+  // Fetch all absence records and filter client-side by record ID.
+  // Airtable linked-record fields return arrays of record IDs in the API response,
+  // but formulas resolve them to names — so client-side filtering is more reliable.
+  const recs = await loadAllPages(TABLE_ABSENCE, '');
+  absences = recs
+    .filter(r => {
+      const people = r.fields[F.person];
+      return Array.isArray(people) && people.includes(currentEmpId);
+    })
+    .map(r=>({
+      id:          r.id,
+      type:        r.fields[F.type]        || '',
+      start:       r.fields[F.startDate]   || '',
+      end:         r.fields[F.endDate]     || '',
+      workingDays: r.fields[F.workingDays] || 0,
+      status:      r.fields[F.status]      || 'Approved',
+      notes:       r.fields[F.notes]       || '',
+    }));
 }
 
 // ── Allotment ─────────────────────────────────────────────────────────────────
@@ -1033,7 +1042,13 @@ function buildMonthCal(y, m) {
           else                    cell.classList.add('range-mid');
         } else { cell.classList.add('sick'); }
       }
-      // Calendar selection state (initial render only — hover updates in-place)
+      // Committed selection — stays visible after second click until form cleared
+      if(!calSel.active && calCommitted.start && calCommitted.end){
+        const lo=calCommitted.start, hi=calCommitted.end;
+        if(ds===lo||ds===hi) cell.classList.add('sel-start');
+        else if(ds>lo && ds<hi) cell.classList.add('sel-range');
+      }
+      // Active selection state (initial render only — hover updates in-place)
       if(calSel.active && calSel.start && ds===calSel.start) cell.classList.add('sel-start');
       // All non-weekend days are clickable
       cell.dataset.ds = ds;
@@ -1066,6 +1081,7 @@ function handleCalDayClick(ds) {
     let s=calSel.start, e=ds;
     if(e<s)[s,e]=[e,s];
     calSel.active=false; calSel.start=null; calSel.hover=null;
+    calCommitted.start=s; calCommitted.end=e;
     document.getElementById('calHint').style.display='none';
     // Multi-day = Vacation; single day stays as current type
     if(s!==e) setLogType('Vacation');
@@ -1146,7 +1162,8 @@ function clearForm(){
   document.getElementById('endDate').value=todayStr;
   document.getElementById('sickDate').value=todayStr;
   document.getElementById('absenceNote').value='';
-  clearFile(); updateWorkingDays();
+  calCommitted.start=null; calCommitted.end=null;
+  clearFile(); updateWorkingDays(); renderCalendar();
 }
 
 async function submitAbsence(){
@@ -1186,6 +1203,7 @@ async function submitAbsence(){
     }
 
     absences.push({id:recordId, type:logType, start:startStr, end:endStr, workingDays:wdays, status:'Approved'});
+    calCommitted.start=null; calCommitted.end=null;
     updateAllotment(); renderCalendar(); renderLists(); clearForm();
     toast(uploadWarning?'Absence logged. Certificate upload failed — add it in Airtable.':'Absence submitted successfully.', uploadWarning?'':' success');
   } catch(e){ toast(e.message,'error'); }

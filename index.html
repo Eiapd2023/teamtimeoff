@@ -175,7 +175,6 @@
       .absence-table { font-size: .78rem; }
       .absence-table th, .absence-table td { padding: 8px 6px; }
       .absence-table .col-status { display: none; }
-      .status-dot { display: inline-block; }
     }
 
     /* ── User dropdown ── */
@@ -278,9 +277,10 @@
     .badge-type { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 3px; font-size: .72rem; font-weight: 700; }
     .badge-type.vacation { background: #ddeef8; color: #2d7ab5; }
     .badge-type.sick { background: #fde8e8; color: #c0392b; }
-    .status-dot { display: none; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     .status-dot.approved { background: #27ae60; }
     .status-dot.pending  { background: #b0bec5; }
+    @media(min-width: 641px) { .status-dot { display: none; } }
     .empty-state { text-align: center; padding: 32px; color: #8a9ab0; font-size: .88rem; }
 
     /* ── Detail view inside modal ── */

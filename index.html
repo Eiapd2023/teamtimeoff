@@ -174,6 +174,7 @@
       .accordion { display: block; }
       .absence-table { font-size: .78rem; }
       .absence-table th, .absence-table td { padding: 8px 6px; }
+      .absence-table .col-status { display: none; }
     }
 
     /* ── User dropdown ── */
@@ -1400,17 +1401,19 @@ function renderLists(){
 
 function buildTable(rows){
   if(!rows.length) return '<div class="empty-state">No absences to display.</div>';
-  return `<p style="font-size:.75rem;color:#8a9ab0;margin-bottom:10px;">Tap a row to view details.</p>
+  return `<p style="font-size:.75rem;color:#8a9ab0;margin-bottom:10px;">Click a row to view details.</p>
   <table class="absence-table">
-    <thead><tr><th>Type</th><th>Start</th><th>End</th><th>Days</th></tr></thead>
+    <thead><tr><th>Type</th><th>Start</th><th>End</th><th>Days</th><th class="col-status">Status</th></tr></thead>
     <tbody>${rows.map(a=>{
-      const dotClass = (a.status||'').toLowerCase()==='approved' ? 'approved' : 'pending';
+      const dotClass  = (a.status||'').toLowerCase()==='approved' ? 'approved' : 'pending';
       const typeClass = a.type==='Vacation' ? 'vacation' : 'sick';
+      const statusLabel = a.status || 'Pending';
       return `<tr class="clickable-row" onclick="openEditModal('${a.id}')">
         <td><span class="badge-type ${typeClass}"><span class="status-dot ${dotClass}"></span>${a.type}</span></td>
         <td>${displayDate(a.start)}</td>
         <td>${displayDate(a.end)}</td>
         <td>${a.workingDays} day${a.workingDays!==1?'s':''}</td>
+        <td class="col-status"><span class="status-pill ${dotClass}">${statusLabel}</span></td>
       </tr>`;
     }).join('')}</tbody></table>`;
 }

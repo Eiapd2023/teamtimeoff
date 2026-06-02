@@ -374,7 +374,7 @@
     <div class="tab-panel" id="panel-log">
       <div class="form-type-toggle">
         <button class="type-btn active vacation" id="btnVacType" onclick="setLogType('Vacation')">Vacation</button>
-        <button class="type-btn" id="btnSickType" onclick="setLogType('Sick day')">Sick Day</button>
+        <button class="type-btn" id="btnSickType" onclick="setLogType('Sick Day')">Sick Day</button>
       </div>
 
       <div id="vacationFields">
@@ -841,7 +841,7 @@ async function loadAbsences() {
 // ── Allotment ─────────────────────────────────────────────────────────────────
 function updateAllotment() {
   const vacUsed  = countUsed('Vacation');
-  const sickUsed = countUsed('Sick day');
+  const sickUsed = countUsed('Sick Day');
   const vacLeft  = VACATION_ALLOT - vacUsed;
   const sickLeft = SICK_ALLOT - sickUsed;
   document.getElementById('fillVac').style.width  = `${Math.min(100,vacUsed/VACATION_ALLOT*100)}%`;
@@ -1030,7 +1030,7 @@ async function submitAbsence(){
     const recordId=result.records[0].id;
 
     let uploadWarning=false;
-    if(selectedFile&&logType==='Sick day'){
+    if(selectedFile&&logType==='Sick Day'){
       try{ await uploadAttachment(recordId, selectedFile); }
       catch{ uploadWarning=true; }
     }

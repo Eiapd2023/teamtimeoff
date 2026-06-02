@@ -94,11 +94,11 @@
     .cal-day.weekend { color: #c0ccd8; }
     .cal-day.past:not(.vacation):not(.sick) { color: #c8d4dc; }
     .cal-day.today { font-weight: 700; outline: 2px solid #f39c12; outline-offset: -1px; }
-    .cal-day.vacation { background: #2d7ab5; color: #fff; }
+    .cal-day.vacation { background: #7db8e0; color: #fff; }
     .cal-day.vacation.range-start { border-radius: 3px 0 0 3px; }
     .cal-day.vacation.range-end   { border-radius: 0 3px 3px 0; }
     .cal-day.vacation.range-mid   { border-radius: 0; }
-    .cal-day.sick { background: #c0392b; color: #fff; border-radius: 3px; }
+    .cal-day.sick { background: #e07575; color: #fff; border-radius: 3px; }
     /* Selection states */
     .cal-day.sel-start {
       background: #1a5a8a; color: #fff; border-radius: 3px;
@@ -123,8 +123,8 @@
     }
     .legend-item { display: flex; align-items: center; gap: 5px; font-size: .75rem; color: #5a6a7a; }
     .legend-swatch { width: 12px; height: 12px; border-radius: 2px; }
-    .legend-swatch.vacation { background: #2d7ab5; }
-    .legend-swatch.sick { background: #c0392b; }
+    .legend-swatch.vacation { background: #7db8e0; }
+    .legend-swatch.sick { background: #e07575; }
     .legend-swatch.today { border: 2px solid #f39c12; background: transparent; }
 
     /* ── Tabs ── */
@@ -300,6 +300,34 @@
       background: #eef6ff; border: 1px solid #c0daf5; border-radius: 4px;
       padding: 8px 12px; font-size: .78rem; color: #2d7ab5; margin-bottom: 14px; display: none;
     }
+
+    /* ── Edit absence modal ── */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.45); z-index: 500;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-card {
+      background: #fff; border-radius: 8px; padding: 28px;
+      max-width: 480px; width: 100%;
+      box-shadow: 0 8px 32px rgba(0,0,0,.2);
+      max-height: 90vh; overflow-y: auto;
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .modal-title { font-size: 1rem; font-weight: 700; color: #1a5a8a; }
+    .modal-close {
+      background: none; border: none; font-size: 1.4rem; cursor: pointer;
+      color: #8a9ab0; line-height: 1; padding: 0 4px;
+    }
+    .modal-close:hover { color: #2c3e50; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+    .btn-danger { background: #c0392b; color: #fff; }
+    .absence-table tr.clickable-row { cursor: pointer; }
+    .absence-table tr.clickable-row:hover td { background: #eef6ff; }
   </style>
 </head>
 <body>
@@ -440,6 +468,63 @@
 <!-- Toast -->
 <div class="toast-wrap" id="toastWrap"></div>
 
+<!-- Edit Absence Modal -->
+<div class="modal-backdrop" id="editModal" onclick="closeEditModal(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="editModalTitle">Edit Absence</div>
+      <button class="modal-close" onclick="closeEditModal()">&times;</button>
+    </div>
+
+    <div id="editVacFields">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" id="editStartDate" onchange="updateEditDays()" />
+        </div>
+        <div class="form-group">
+          <label>End Date</label>
+          <input type="date" id="editEndDate" onchange="updateEditDays()" />
+        </div>
+      </div>
+      <div class="days-note" id="editDaysNote"></div>
+    </div>
+
+    <div id="editSickFields">
+      <div class="form-row">
+        <div class="form-group" style="max-width:220px">
+          <label>Date</label>
+          <input type="date" id="editSickDate" />
+        </div>
+      </div>
+      <div class="file-upload-area">
+        <label class="file-upload-label" for="editCertFile">Attach / replace medical certificate</label>
+        <input type="file" id="editCertFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="onEditFileSelected()" />
+        <div class="file-note">PDF, JPG, PNG, or Word</div>
+        <div id="editFileChip" style="display:none">
+          <div class="file-chip">
+            <span id="editFileName"></span>
+            <span class="file-remove" onclick="clearEditFile()">x</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="editNote" placeholder="Any additional information..."></textarea>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-vacation" id="editSaveBtn" onclick="saveEditAbsence()">Save Changes</button>
+      <button class="btn btn-danger" onclick="deleteAbsence()">Delete</button>
+      <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- Setup overlay (admin credentials, one-time per device) -->
 <div class="overlay" id="setupScreen">
   <div class="overlay-card">
@@ -524,7 +609,7 @@ let absences     = [];
 let calOffset    = 0;
 let logType      = 'Vacation';
 let selectedFile = null;
-let calSel       = { active: false, start: null }; // calendar date selection
+let calSel       = { active: false, start: null, hover: null }; // calendar date selection
 
 // Auto-detected field names
 let F = {
@@ -900,10 +985,17 @@ function buildMonthCal(y, m) {
       // Calendar selection state
       if(calSel.active && calSel.start){
         if(ds===calSel.start) cell.classList.add('sel-start');
+        else if(calSel.hover){
+          const lo=calSel.start<calSel.hover?calSel.start:calSel.hover;
+          const hi=calSel.start<calSel.hover?calSel.hover:calSel.start;
+          if(ds>lo && ds<hi) cell.classList.add('sel-range');
+          if(ds===lo||ds===hi) cell.classList.add('sel-start');
+        }
       }
       // All non-weekend days are clickable
       cell.classList.add('clickable');
       cell.addEventListener('click', ()=>handleCalDayClick(ds));
+      cell.addEventListener('mouseenter', ()=>handleCalHover(ds));
     }
     if(ds===todayStr) cell.classList.add('today');
     grid.appendChild(cell);
@@ -929,7 +1021,7 @@ function handleCalDayClick(ds) {
     // Second click — complete selection
     let s=calSel.start, e=ds;
     if(e<s)[s,e]=[e,s];
-    calSel.active=false; calSel.start=null;
+    calSel.active=false; calSel.start=null; calSel.hover=null;
     document.getElementById('calHint').style.display='none';
     // Multi-day = Vacation; single day stays as current type
     if(s!==e) setLogType('Vacation');
@@ -945,8 +1037,14 @@ function handleCalDayClick(ds) {
   }
 }
 
+function handleCalHover(ds){
+  if(!calSel.active) return;
+  calSel.hover=ds;
+  renderCalendar();
+}
+
 function cancelCalSel(){
-  calSel.active=false; calSel.start=null;
+  calSel.active=false; calSel.start=null; calSel.hover=null;
   document.getElementById('calHint').style.display='none';
   renderCalendar();
 }
@@ -1048,15 +1146,16 @@ function renderLists(){
   const past    =absences.filter(a=>a.end <todayStr).sort((a,b)=>b.start.localeCompare(a.start));
   document.getElementById('countUpcoming').textContent=upcoming.length;
   document.getElementById('countPast').textContent    =past.length;
-  document.getElementById('upcomingContent').innerHTML=buildTable(upcoming);
-  document.getElementById('pastContent').innerHTML    =buildTable(past);
+  document.getElementById('upcomingContent').innerHTML=buildTable(upcoming, true);
+  document.getElementById('pastContent').innerHTML    =buildTable(past, false);
 }
 
-function buildTable(rows){
+function buildTable(rows, editable=false){
   if(!rows.length) return '<div class="empty-state">No absences to display.</div>';
-  return `<table class="absence-table">
+  const hint = editable ? '<p style="font-size:.75rem;color:#8a9ab0;margin-bottom:10px;">Click a row to edit or delete it.</p>' : '';
+  return hint + `<table class="absence-table">
     <thead><tr><th>Type</th><th>Start Date</th><th>End Date</th><th>Duration</th><th>Status</th></tr></thead>
-    <tbody>${rows.map(a=>`<tr>
+    <tbody>${rows.map(a=>`<tr ${editable?`class="clickable-row" onclick="openEditModal('${a.id}')"`:''}>
       <td><span class="badge-type ${a.type==='Vacation'?'vacation':'sick'}">${a.type}</span></td>
       <td>${displayDate(a.start)}</td><td>${displayDate(a.end)}</td>
       <td>${a.workingDays} day${a.workingDays!==1?'s':''}</td>
@@ -1070,6 +1169,125 @@ function toast(msg, type=''){
   el.className=`toast ${type}`; el.textContent=msg;
   document.getElementById('toastWrap').appendChild(el);
   setTimeout(()=>el.remove(), 4500);
+}
+
+// ── Edit Absence Modal ────────────────────────────────────────────────────────
+let _editId = null;
+let _editFile = null;
+
+function openEditModal(id) {
+  const a = absences.find(x=>x.id===id);
+  if (!a) return;
+  _editId = id;
+  _editFile = null;
+
+  const isVac = a.type === 'Vacation';
+  document.getElementById('editModalTitle').textContent = `Edit ${a.type}`;
+  document.getElementById('editVacFields').style.display = isVac ? '' : 'none';
+  document.getElementById('editSickFields').style.display = isVac ? 'none' : '';
+  document.getElementById('editSaveBtn').className = isVac ? 'btn btn-vacation' : 'btn btn-sick';
+
+  if (isVac) {
+    document.getElementById('editStartDate').value = a.start;
+    document.getElementById('editEndDate').value   = a.end;
+    updateEditDays();
+  } else {
+    document.getElementById('editSickDate').value = a.start;
+  }
+  document.getElementById('editNote').value = a.notes || '';
+  document.getElementById('editFileChip').style.display = 'none';
+  document.getElementById('editCertFile').value = '';
+
+  document.getElementById('editModal').classList.add('open');
+}
+
+function closeEditModal(e) {
+  if (e && e.target !== document.getElementById('editModal')) return;
+  document.getElementById('editModal').classList.remove('open');
+  _editId = null; _editFile = null;
+}
+
+function updateEditDays() {
+  const s = document.getElementById('editStartDate').value;
+  const e = document.getElementById('editEndDate').value;
+  const el = document.getElementById('editDaysNote');
+  if (s && e && e >= s) {
+    const days = workingDays(s, e);
+    el.textContent = `${days} working day${days!==1?'s':''}`;
+  } else { el.textContent=''; }
+}
+
+function onEditFileSelected() {
+  const f = document.getElementById('editCertFile').files[0];
+  _editFile = f || null;
+  if (f) {
+    document.getElementById('editFileName').textContent = f.name;
+    document.getElementById('editFileChip').style.display = 'block';
+  }
+}
+function clearEditFile() {
+  _editFile = null;
+  document.getElementById('editCertFile').value = '';
+  document.getElementById('editFileChip').style.display = 'none';
+}
+
+async function saveEditAbsence() {
+  const a = absences.find(x=>x.id===_editId);
+  if (!a) return;
+  const btn = document.getElementById('editSaveBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    let startStr, endStr;
+    if (a.type === 'Vacation') {
+      startStr = document.getElementById('editStartDate').value;
+      endStr   = document.getElementById('editEndDate').value;
+      if (!startStr||!endStr||endStr<startStr) throw new Error('Invalid date range.');
+    } else {
+      startStr = endStr = document.getElementById('editSickDate').value;
+      if (!startStr) throw new Error('Please select a date.');
+    }
+    const note = document.getElementById('editNote').value.trim();
+    const fields = {
+      [F.startDate]: startStr,
+      [F.endDate]:   endStr,
+    };
+    if (note) fields[F.notes] = note;
+
+    await atPatch(TABLE_ABSENCE, _editId, fields);
+
+    if (_editFile) {
+      try { await uploadAttachment(_editId, _editFile); }
+      catch { toast('Saved, but certificate upload failed.', 'error'); }
+    }
+
+    // Update local state
+    a.start = startStr; a.end = endStr;
+    a.workingDays = a.type==='Vacation' ? workingDays(startStr,endStr) : 1;
+    if (note) a.notes = note;
+
+    updateAllotment(); renderCalendar(); renderLists();
+    document.getElementById('editModal').classList.remove('open');
+    toast('Absence updated.', 'success');
+  } catch(e) { toast(e.message, 'error'); }
+  btn.disabled = false;
+  btn.textContent = 'Save Changes';
+}
+
+async function deleteAbsence() {
+  if (!_editId) return;
+  if (!confirm('Delete this absence? This cannot be undone.')) return;
+  const btn = document.getElementById('editSaveBtn');
+  btn.disabled = true;
+  try {
+    const r = await fetch(`${atUrl(TABLE_ABSENCE)}/${_editId}`, {
+      method: 'DELETE', headers: atH()
+    });
+    if (!r.ok) throw new Error(`Airtable ${r.status}`);
+    absences = absences.filter(a=>a.id!==_editId);
+    updateAllotment(); renderCalendar(); renderLists();
+    document.getElementById('editModal').classList.remove('open');
+    toast('Absence deleted.', 'success');
+  } catch(e) { toast(e.message, 'error'); btn.disabled=false; }
 }
 
 // ── Service worker ────────────────────────────────────────────────────────────

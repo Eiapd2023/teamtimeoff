@@ -175,6 +175,7 @@
       .absence-table { font-size: .78rem; }
       .absence-table th, .absence-table td { padding: 8px 6px; }
       .absence-table .col-status { display: none; }
+      .status-dot { display: inline-block; }
     }
 
     /* ── User dropdown ── */
@@ -277,7 +278,7 @@
     .badge-type { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 3px; font-size: .72rem; font-weight: 700; }
     .badge-type.vacation { background: #ddeef8; color: #2d7ab5; }
     .badge-type.sick { background: #fde8e8; color: #c0392b; }
-    .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .status-dot { display: none; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     .status-dot.approved { background: #27ae60; }
     .status-dot.pending  { background: #b0bec5; }
     .empty-state { text-align: center; padding: 32px; color: #8a9ab0; font-size: .88rem; }
@@ -1236,7 +1237,7 @@ function handleCalDayClick(ds) {
     updateWorkingDays();
     // Switch to Log tab / open accordion
     if(window.innerWidth<=640){
-      toggleAccordion('log');
+      openAccordion('log');
       setTimeout(()=>document.getElementById('acc-log').scrollIntoView({behavior:'smooth'}),100);
     } else {
       const logTabBtn=document.querySelector('.tab-btn');
@@ -1439,6 +1440,15 @@ function toggleAccordion(name) {
       btn.classList.remove('open');
       body.classList.remove('open');
     }
+  });
+}
+
+// Force a section open without toggling — used when navigating programmatically
+function openAccordion(name) {
+  ['log','upcoming','past'].forEach(n => {
+    const open = n === name;
+    document.getElementById(`acc-btn-${n}`).classList.toggle('open', open);
+    document.getElementById(`acc-${n}`).classList.toggle('open', open);
   });
 }
 

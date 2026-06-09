@@ -901,8 +901,8 @@ async function detectFields() {
         const lo = field.name.toLowerCase().trim();
         if      (lo==='username')            F.username  = field.name;
         else if (lo==='password')            F.password  = field.name;
-        else if (lo==='vacation allotment')       F.vacAllot  = field.name;
-        else if (lo==='sick allotment' || lo==='sick day allotment') F.sickAllot = field.name;
+        else if (lo.includes('vacation') && lo.includes('allot')) F.vacAllot  = field.name;
+        else if (lo.includes('sick')     && lo.includes('allot')) F.sickAllot = field.name;
       }
     }
   } catch(e) { console.warn('Field detection skipped:', e.message); }

@@ -768,8 +768,9 @@
 // ── Config ────────────────────────────────────────────────────────────────────
 const TABLE_MEMBERS  = 'Team Members';
 const TABLE_ABSENCE  = 'Absence Events';
-const VACATION_ALLOT = 20;
-const SICK_ALLOT     = 10;
+// Per-person allotments — overwritten at login from Airtable, default fallback 20/10
+let VACATION_ALLOT = parseInt(localStorage.getItem('at_vac_allot'))  || 20;
+let SICK_ALLOT     = parseInt(localStorage.getItem('at_sick_allot')) || 10;
 const MONTH_NAMES    = ['January','February','March','April','May','June',
                         'July','August','September','October','November','December'];
 const SHORT_MONTHS   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -799,6 +800,8 @@ let F = {
   certificate: 'Medical Certificate',
   username:    'Username',
   password:    'Password',
+  vacAllot:    'Vacation Allotment',
+  sickAllot:   'Sick Allotment',
 };
 
 const today    = new Date(); today.setHours(0,0,0,0);
@@ -896,8 +899,10 @@ async function detectFields() {
     if (memTable) {
       for (const field of memTable.fields) {
         const lo = field.name.toLowerCase().trim();
-        if      (lo==='username') F.username = field.name;
-        else if (lo==='password') F.password = field.name;
+        if      (lo==='username')            F.username  = field.name;
+        else if (lo==='password')            F.password  = field.name;
+        else if (lo==='vacation allotment')  F.vacAllot  = field.name;
+        else if (lo==='sick allotment')      F.sickAllot = field.name;
       }
     }
   } catch(e) { console.warn('Field detection skipped:', e.message); }
@@ -1031,6 +1036,15 @@ async function finishLogin() {
   localStorage.setItem('at_emp_name', _loginMember.fields['Name'] || _loginMember.fields[F.username]);
   currentEmpId   = _loginMember.id;
   currentEmpName = _loginMember.fields['Name'] || _loginMember.fields[F.username];
+
+  // Per-person allotments (fall back to 20/10 if fields not set)
+  const vac  = parseInt(_loginMember.fields[F.vacAllot]);
+  const sick = parseInt(_loginMember.fields[F.sickAllot]);
+  VACATION_ALLOT = isNaN(vac)  ? 20 : vac;
+  SICK_ALLOT     = isNaN(sick) ? 10 : sick;
+  localStorage.setItem('at_vac_allot',  VACATION_ALLOT);
+  localStorage.setItem('at_sick_allot', SICK_ALLOT);
+
   document.getElementById('loginScreen').style.display='none';
   init();
 }
@@ -1043,6 +1057,8 @@ function showLoginErr(msg) {
 function logout() {
   localStorage.removeItem('at_emp_id');
   localStorage.removeItem('at_emp_name');
+  localStorage.removeItem('at_vac_allot');
+  localStorage.removeItem('at_sick_allot');
   location.reload();
 }
 

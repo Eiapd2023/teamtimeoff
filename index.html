@@ -801,7 +801,7 @@ let F = {
   username:    'Username',
   password:    'Password',
   vacAllot:    'Vacation Allotment',
-  sickAllot:   'Sick Allotment',
+  sickAllot:   'Sick Day Allotment',
 };
 
 const today    = new Date(); today.setHours(0,0,0,0);
@@ -901,8 +901,8 @@ async function detectFields() {
         const lo = field.name.toLowerCase().trim();
         if      (lo==='username')            F.username  = field.name;
         else if (lo==='password')            F.password  = field.name;
-        else if (lo==='vacation allotment')  F.vacAllot  = field.name;
-        else if (lo==='sick allotment')      F.sickAllot = field.name;
+        else if (lo==='vacation allotment')       F.vacAllot  = field.name;
+        else if (lo==='sick allotment' || lo==='sick day allotment') F.sickAllot = field.name;
       }
     }
   } catch(e) { console.warn('Field detection skipped:', e.message); }
